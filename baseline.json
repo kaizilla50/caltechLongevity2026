@@ -1,0 +1,92 @@
+{
+  "personId": "demo-parent-1",
+  "knownSymptoms": [
+    "occasional knee pain",
+    "mild lower-back stiffness after sitting",
+    "seasonal hay-fever congestion"
+  ],
+  "medications": [
+    {
+      "name": "Amlodipine 5mg",
+      "startedOn": "2026-05-17",
+      "purpose": "lower blood pressure"
+    }
+  ],
+  "recentCheckIns": [
+    {
+      "id": "seed-2026-05-17",
+      "timestamp": "2026-05-17T08:00:00Z",
+      "medContext": { "name": "Amlodipine 5mg", "dayOfChange": 0 },
+      "language": "ja",
+      "rawTranscript": "今朝、新しい薬を初めて飲みました。今のところ元気です。",
+      "translatedTranscript": "I took the new medicine for the first time this morning. So far I feel fine.",
+      "extracted": {
+        "medicationTaken": "yes",
+        "perceivedEffect": "same",
+        "symptoms": [],
+        "comprehensionFlag": false
+      },
+      "ambiguity": []
+    },
+    {
+      "id": "seed-2026-05-18",
+      "timestamp": "2026-05-18T08:00:00Z",
+      "medContext": { "name": "Amlodipine 5mg", "dayOfChange": 1 },
+      "language": "ja",
+      "rawTranscript": "薬を飲みました。特に変わったことはありません。",
+      "translatedTranscript": "I took my medicine. Nothing in particular has changed.",
+      "extracted": {
+        "medicationTaken": "yes",
+        "perceivedEffect": "same",
+        "symptoms": [],
+        "comprehensionFlag": false
+      },
+      "ambiguity": []
+    },
+    {
+      "id": "seed-2026-05-19",
+      "timestamp": "2026-05-19T08:00:00Z",
+      "medContext": { "name": "Amlodipine 5mg", "dayOfChange": 2 },
+      "language": "ja",
+      "rawTranscript": "薬は飲みました。膝がいつものように少し痛みます。",
+      "translatedTranscript": "I took my medicine. My knee aches a little, as usual.",
+      "extracted": {
+        "medicationTaken": "yes",
+        "perceivedEffect": "same",
+        "symptoms": [{ "term": "knee pain", "isNew": false }],
+        "comprehensionFlag": false
+      },
+      "ambiguity": []
+    },
+    {
+      "id": "seed-2026-05-20",
+      "timestamp": "2026-05-20T08:00:00Z",
+      "medContext": { "name": "Amlodipine 5mg", "dayOfChange": 3 },
+      "language": "ja",
+      "rawTranscript": "薬は飲みましたが、少しふらふらします。",
+      "translatedTranscript": "I took my medicine, but I feel a little dizzy.",
+      "extracted": {
+        "medicationTaken": "yes",
+        "perceivedEffect": "worse",
+        "symptoms": [{ "term": "dizziness", "isNew": true }],
+        "comprehensionFlag": false
+      },
+      "ambiguity": []
+    },
+    {
+      "id": "seed-2026-05-21",
+      "timestamp": "2026-05-21T08:00:00Z",
+      "medContext": { "name": "Amlodipine 5mg", "dayOfChange": 4 },
+      "language": "ja",
+      "rawTranscript": "薬を飲みました。まだ少しふらふらしています。",
+      "translatedTranscript": "I took my medicine. I still feel a little dizzy.",
+      "extracted": {
+        "medicationTaken": "yes",
+        "perceivedEffect": "worse",
+        "symptoms": [{ "term": "dizziness", "isNew": true }],
+        "comprehensionFlag": false
+      },
+      "ambiguity": []
+    }
+  ]
+}
