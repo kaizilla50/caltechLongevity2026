@@ -63,3 +63,15 @@ appointment booking, care-circle permissions, auth, more than 2 languages, nativ
 ## Demo persona
 Parent: Japanese-speaking, day 5 of a new blood-pressure medication.
 Caregiver: English-speaking adult child (the primary user / dashboard viewer).
+
+Product evolution (platform layer)
+The app is now a family profile for tracking a senior over time, not a single check-in. One seeded patient ("Mom") with ~a year of history makes it feel established.
+
+Pages: Check-in (core, done), History (calendar of past check-ins), Trends (graphs), Medications (list w/ directions + side effects), Care Team (contacts), Settings (coming soon).
+State: ONE app-root profile via React Context (useProfile), in-memory only. Survives tab switches, resets on refresh. Never per-page state.
+A chat/check-in can ADD to the profile (new med, new symptom, new doctor) and it appears across History/Trends — all in-memory for the demo.
+
+Framing guardrail (don't drift)
+This is "interpretation over time," NOT "collect more data." The log exists to surface CHANGES against the person's own baseline — that's the moat and the pitch. Never build or describe it as a data-hoarding tracker.
+Still non-negotiable
+Rules decide urgency. The LLM only translates, extracts, explains. Never diagnoses.
