@@ -116,7 +116,7 @@ const NAV_ICONS: Record<NavItemId, string> = {
 const NAV_ITEMS: { id: NavItemId; label: string; clickable: boolean }[] = [
  { id: "checkin", label: "Check-in", clickable: true },
  { id: "history", label: "History", clickable: true },
- { id: "trends", label: "Trends", clickable: false },
+ { id: "trends", label: "Trends", clickable: true },
  { id: "medications", label: "Medications", clickable: true },
  { id: "careteam", label: "Care Team", clickable: true },
  { id: "settings", label: "Settings", clickable: false },
@@ -390,6 +390,8 @@ export default function Dashboard() {
            {activeView === "medications" && <MedicationsView />}
 
            {activeView === "careteam" && <CareTeamView />}
+
+           {activeView === "trends" && <TrendsView />}
          </div>
        </main>
 
@@ -1237,6 +1239,270 @@ function CareTeamCard({
       </dl>
     </article>
   );
+}
+
+// Trends view — month-by-month verdict counts over the seeded year, plus a
+// short list of patterns derived from the same decide() pipeline that scores
+// individual check-ins. No new rule logic, no LLM, no heavy chart library —
+// just inline-styled <div> bars and a couple of named aggregators.
+function TrendsView() {
+  const { profile } = useProfile();
+
+  const months = useMemo(
+    () => buildMonthlyBuckets(profile.checkInHistory),
+    [profile.checkInHistory],
+  );
+  const patterns = useMemo(
+    () => derivePatterns(profile.checkInHistory),
+    [profile.checkInHistory],
+  );
+  const maxTotal = useMemo(
+    () => Math.max(1, ...months.map((m) => m.total)),
+    [months],
+  );
+
+  return (
+    <>
+      <div className="text-sm text-ink-quiet mb-1">Trends</div>
+      <h1 className="font-serif text-3xl md:text-4xl leading-tight text-ink-deep">
+        Mom&rsquo;s year at a glance.
+      </h1>
+      <p className="mt-2 text-ink-soft text-sm md:text-base leading-relaxed max-w-xl">
+        {months.length}{" "}months of check-ins, scored by the same rules engine that ran today&rsquo;s.
+      </p>
+
+      <div className="mt-8">
+        <Section label="Each month">
+          <MonthlyBarStrip months={months} maxTotal={maxTotal} />
+        </Section>
+      </div>
+
+      <div className="mt-10">
+        <Section label="Patterns noticed">
+          <ul className="space-y-2">
+            {patterns.map((p, i) => (
+              <li key={i} className="text-ink-soft leading-relaxed">
+                <span className="mr-2 text-clay/70">·</span>
+                {p}
+              </li>
+            ))}
+          </ul>
+        </Section>
+      </div>
+    </>
+  );
+}
+
+interface MonthBucket {
+  key: string; // YYYY-MM
+  year: number;
+  month: number; // 0-11
+  label: string; // e.g. "May '25" or "Jun"
+  escalate: number;
+  monitor: number;
+  fine: number;
+  total: number;
+}
+
+function MonthlyBarStrip({
+  months,
+  maxTotal,
+}: {
+  months: MonthBucket[];
+  maxTotal: number;
+}) {
+  const BAR_PX = 96; // height the tallest month occupies
+
+  return (
+    <div className="rounded-2xl border border-edge bg-paper p-6 md:p-7">
+      <div
+        className="flex items-end gap-1.5"
+        style={{ height: `${BAR_PX}px` }}
+      >
+        {months.map((m) => {
+          const esc = (m.escalate / maxTotal) * BAR_PX;
+          const mon = (m.monitor / maxTotal) * BAR_PX;
+          const fin = (m.fine / maxTotal) * BAR_PX;
+          const fineOnly = esc === 0 && mon === 0;
+          return (
+            <div
+              key={m.key}
+              className="flex-1 min-w-0 flex flex-col justify-end"
+              title={`${m.label.replace(/ '\d{2}$/, "")} ${m.year}: ${m.escalate} escalate · ${m.monitor} monitor · ${m.fine} fine`}
+            >
+              {esc > 0 && (
+                <div
+                  className="w-full bg-clay rounded-t-sm"
+                  style={{ height: `${esc}px` }}
+                />
+              )}
+              {mon > 0 && (
+                <div
+                  className={`w-full bg-stone-warm/75 ${esc === 0 ? "rounded-t-sm" : ""}`}
+                  style={{ height: `${mon}px` }}
+                />
+              )}
+              {fin > 0 && (
+                <div
+                  className={`w-full bg-stone-warm/25 ${fineOnly ? "rounded-t-sm" : ""}`}
+                  style={{ height: `${fin}px` }}
+                />
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="mt-2 flex gap-1.5">
+        {months.map((m) => (
+          <div
+            key={m.key}
+            className="flex-1 min-w-0 text-[9px] text-center text-ink-quiet tabular-nums whitespace-nowrap overflow-hidden"
+          >
+            {m.label}
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-ink-soft">
+        <LegendSwatch className="bg-clay" label="Escalate" />
+        <LegendSwatch className="bg-stone-warm/75" label="Monitor" />
+        <LegendSwatch className="bg-stone-warm/25" label="Fine" />
+      </div>
+    </div>
+  );
+}
+
+function LegendSwatch({
+  className,
+  label,
+}: {
+  className: string;
+  label: string;
+}) {
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <span className={`w-2.5 h-2.5 rounded-sm ${className}`} />
+      {label}
+    </span>
+  );
+}
+
+const SHORT_MONTH_NAMES = [
+  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+];
+
+function buildMonthlyBuckets(history: CheckIn[]): MonthBucket[] {
+  const map = new Map<string, MonthBucket>();
+  for (const ci of history) {
+    const key = ci.timestamp.slice(0, 7);
+    let b = map.get(key);
+    if (!b) {
+      b = {
+        key,
+        year: +key.slice(0, 4),
+        month: +key.slice(5, 7) - 1,
+        label: "",
+        escalate: 0,
+        monitor: 0,
+        fine: 0,
+        total: 0,
+      };
+      map.set(key, b);
+    }
+    const level = decide(ci, baseline).level;
+    if (level === "escalate") b.escalate++;
+    else if (level === "monitor") b.monitor++;
+    else b.fine++;
+    b.total++;
+  }
+  const sorted = [...map.values()].sort((a, b) => a.key.localeCompare(b.key));
+  // Show year on the first bucket and whenever the year rolls over so a
+  // 13-month strip ("May '25 … May '26") stays unambiguous.
+  let prevYear = -1;
+  for (const b of sorted) {
+    b.label =
+      b.year === prevYear
+        ? SHORT_MONTH_NAMES[b.month]
+        : `${SHORT_MONTH_NAMES[b.month]} '${String(b.year).slice(2)}`;
+    prevYear = b.year;
+  }
+  return sorted;
+}
+
+// "Patterns noticed" — short, derived from the same decide() pipeline so the
+// numbers always match the History calendar and the Trends bar strip. Each
+// pattern is a complete sentence so they render straight into a list.
+function derivePatterns(history: CheckIn[]): string[] {
+  const out: string[] = [];
+
+  const episodes = countMedRelatedEpisodes(history);
+  if (episodes > 0) {
+    out.push(
+      `${episodes} medication-related episode${episodes === 1 ? "" : "s"} flagged in the past year.`,
+    );
+  }
+
+  const top = mostCommonSymptom(history);
+  if (top) {
+    out.push(
+      `Most-mentioned symptom: ${top.term} (${top.count} mention${top.count === 1 ? "" : "s"}).`,
+    );
+  }
+
+  let fine = 0;
+  let total = 0;
+  for (const ci of history) {
+    const level = decide(ci, baseline).level;
+    if (level === "fine") fine++;
+    total++;
+  }
+  if (total > 0) {
+    const pct = Math.round((fine / total) * 100);
+    out.push(`${pct}% of days were quiet — no symptoms, no missed doses.`);
+  }
+
+  return out;
+}
+
+// Count distinct medication-onset episodes: each is a cluster of
+// `newSymptomAfterMedChange` escalates separated from the previous one by
+// more than 14 days. Lisinopril-onset (Nov 2025) + Amlodipine-onset (May
+// 2026) → 2 in the seeded year.
+function countMedRelatedEpisodes(history: CheckIn[]): number {
+  const dayMs = 24 * 60 * 60 * 1000;
+  let count = 0;
+  let lastTime: number | null = null;
+  for (const ci of history) {
+    const decision = decide(ci, baseline);
+    if (!decision.triggeredRules.includes("newSymptomAfterMedChange")) continue;
+    const t = new Date(ci.timestamp).getTime();
+    if (lastTime === null || t - lastTime > 14 * dayMs) count++;
+    lastTime = t;
+  }
+  return count;
+}
+
+function mostCommonSymptom(
+  history: CheckIn[],
+): { term: string; count: number } | null {
+  const counts = new Map<string, number>();
+  for (const ci of history) {
+    for (const s of ci.extracted.symptoms) {
+      counts.set(s.term, (counts.get(s.term) ?? 0) + 1);
+    }
+  }
+  if (counts.size === 0) return null;
+  let bestTerm = "";
+  let bestCount = 0;
+  counts.forEach((c, t) => {
+    if (c > bestCount) {
+      bestTerm = t;
+      bestCount = c;
+    }
+  });
+  return { term: bestTerm, count: bestCount };
 }
 
 // Right insight panel: verdict card + needs clarification
