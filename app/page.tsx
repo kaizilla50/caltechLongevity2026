@@ -585,99 +585,395 @@ function MainResultContent({ result }: { result: ApiResponse }) {
 }
 
 
-// History view — reverse-chronological list of every past check-in. Verdict
-// dot per row uses the same decide() rules engine the live check-in uses; the
-// rules engine is the single source of truth for level coloring.
+// History view — month-at-a-time calendar over the seeded year. Each day cell
+// with a check-in shows a verdict dot (clay/stone/hollow) plus a 1–2 word
+// summary; clicking a day opens a detail panel with the symptoms, transcript,
+// med context, and the "because" reasons the rules engine returned. decide()
+// stays the single source of truth for level coloring — no rule logic is
+// duplicated in this file.
 function HistoryView() {
- const { profile } = useProfile();
- const rows = useMemo(
-   () =>
-     [...profile.checkInHistory].reverse().map((ci) => ({
-       ci,
-       level: decide(ci, baseline).level,
-     })),
-   [profile.checkInHistory],
- );
+  const { profile } = useProfile();
 
+  // Index history by ISO day (YYYY-MM-DD). One check-in per day in the seed.
+  const byDay = useMemo(() => {
+    const m = new Map<string, CheckIn>();
+    for (const ci of profile.checkInHistory) m.set(ci.timestamp.slice(0, 10), ci);
+    return m;
+  }, [profile.checkInHistory]);
 
- return (
-   <>
-     <div className="text-sm text-ink-quiet mb-1">History</div>
-     <h1 className="font-serif text-3xl md:text-4xl leading-tight text-ink-deep">
-       Mom&rsquo;s past check-ins.
-     </h1>
-     <p className="mt-2 text-ink-soft text-sm md:text-base leading-relaxed max-w-xl">
-       {rows.length} days, newest first. The verdict dot reflects the rules engine.
-     </p>
+  // Navigation bounds — drawn from the seed timeline so arrows disable at the
+  // edges instead of letting users wander into empty months.
+  const bounds = useMemo(() => {
+    if (profile.checkInHistory.length === 0) return null;
+    const first = profile.checkInHistory[0].timestamp;
+    const last = profile.checkInHistory[profile.checkInHistory.length - 1].timestamp;
+    return { min: monthFromIso(first), max: monthFromIso(last) };
+  }, [profile.checkInHistory]);
 
+  // Default to today's month. In the demo, today is in May 2026, so this
+  // lands on the month that contains the Amlodipine cluster.
+  const [{ year, month }, setMonth] = useState<{ year: number; month: number }>(
+    () => {
+      const now = new Date();
+      return { year: now.getUTCFullYear(), month: now.getUTCMonth() };
+    },
+  );
 
-     <div className="mt-8 -mx-3">
-       {rows.map(({ ci, level }) => (
-         <HistoryRow key={ci.id} checkIn={ci} level={level} />
-       ))}
-     </div>
-   </>
- );
+  const [selectedKey, setSelectedKey] = useState<string | null>(null);
+  const selected = selectedKey ? (byDay.get(selectedKey) ?? null) : null;
+
+  const cells = useMemo(() => buildMonthGrid(year, month), [year, month]);
+
+  // Per-cell verdicts for the summary line above the grid + the cell tint.
+  const cellVerdicts = useMemo(() => {
+    const m = new Map<string, EscalationDecision["level"]>();
+    for (const key of cells) {
+      if (!key) continue;
+      const ci = byDay.get(key);
+      if (!ci) continue;
+      m.set(key, decide(ci, baseline).level);
+    }
+    return m;
+  }, [cells, byDay]);
+
+  const canPrev = !!bounds && monthCompare({ year, month }, bounds.min) > 0;
+  const canNext = !!bounds && monthCompare({ year, month }, bounds.max) < 0;
+
+  function step(delta: -1 | 1) {
+    setMonth(({ year, month }) => {
+      const m = month + delta;
+      if (m < 0) return { year: year - 1, month: 11 };
+      if (m > 11) return { year: year + 1, month: 0 };
+      return { year, month: m };
+    });
+  }
+
+  return (
+    <>
+      <div className="text-sm text-ink-quiet mb-1">History</div>
+      <h1 className="font-serif text-3xl md:text-4xl leading-tight text-ink-deep">
+        Mom&rsquo;s past check-ins.
+      </h1>
+      <p className="mt-2 text-ink-soft text-sm md:text-base leading-relaxed max-w-xl">
+        {summarizeMonth(cellVerdicts)}
+      </p>
+
+      {/* Month nav */}
+      <div className="mt-8 flex items-center justify-between">
+        <button
+          type="button"
+          onClick={() => step(-1)}
+          disabled={!canPrev}
+          aria-label="Previous month"
+          className="w-9 h-9 rounded-full border border-edge text-ink-soft text-lg leading-none hover:border-clay/40 hover:text-clay-deep disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+        >
+          ‹
+        </button>
+        <div className="font-serif text-xl text-ink-deep">
+          {monthLabel(year, month)}
+        </div>
+        <button
+          type="button"
+          onClick={() => step(1)}
+          disabled={!canNext}
+          aria-label="Next month"
+          className="w-9 h-9 rounded-full border border-edge text-ink-soft text-lg leading-none hover:border-clay/40 hover:text-clay-deep disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+        >
+          ›
+        </button>
+      </div>
+
+      {/* Weekday header */}
+      <div className="mt-5 grid grid-cols-7 gap-1.5 text-[10px] uppercase tracking-widest text-ink-quiet">
+        {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
+          <div key={d} className="text-center pb-1.5">
+            {d}
+          </div>
+        ))}
+      </div>
+
+      {/* Grid */}
+      <div className="grid grid-cols-7 gap-1.5">
+        {cells.map((key, i) => {
+          if (!key) return <div key={`pad-${i}`} className="aspect-square" />;
+          const ci = byDay.get(key);
+          const day = parseInt(key.slice(8, 10), 10);
+          if (!ci) return <EmptyDayCell key={key} day={day} />;
+          const level = cellVerdicts.get(key) ?? "fine";
+          return (
+            <DayCell
+              key={key}
+              day={day}
+              level={level}
+              summary={summarize(ci)}
+              onClick={() => setSelectedKey(key)}
+            />
+          );
+        })}
+      </div>
+
+      {selected && (
+        <DayDetailModal checkIn={selected} onClose={() => setSelectedKey(null)} />
+      )}
+    </>
+  );
 }
 
-
-function HistoryRow({
- checkIn,
- level,
+function DayCell({
+  day,
+  level,
+  summary,
+  onClick,
 }: {
- checkIn: CheckIn;
- level: EscalationDecision["level"];
+  day: number;
+  level: EscalationDecision["level"];
+  summary: string;
+  onClick: () => void;
 }) {
- const escalate = level === "escalate";
- const symptoms = checkIn.extracted.symptoms;
- const summary =
-   symptoms.length > 0
-     ? symptoms
-         .map((s) => (s.isNew ? `${s.term} (new)` : s.term))
-         .join(", ")
-     : truncate(checkIn.translatedTranscript, 90);
-
-
- return (
-   <div
-     className={`flex items-start gap-4 px-3 py-3 border-b border-edge/60 ${
-       escalate ? "bg-clay-soft/40" : ""
-     }`}
-   >
-     <div className="pt-1.5">
-       <Dot level={level} />
-     </div>
-     <div className="w-24 shrink-0 text-xs text-ink-quiet tabular-nums pt-0.5">
-       {longDate(checkIn.timestamp)}
-     </div>
-     <div className="flex-1 min-w-0">
-       <div
-         className={`text-sm leading-relaxed ${
-           escalate ? "text-clay-deep font-medium" : "text-ink-soft"
-         }`}
-       >
-         {summary}
-       </div>
-       <div className="text-[11px] text-ink-quiet mt-0.5">
-         {checkIn.medContext.name} &middot; day {checkIn.medContext.dayOfChange}
-       </div>
-     </div>
-   </div>
- );
+  const isEsc = level === "escalate";
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`aspect-square min-w-0 rounded-lg border p-1.5 text-left transition-colors flex flex-col ${
+        isEsc
+          ? "bg-clay-soft/60 border-clay/30 hover:border-clay/60"
+          : "bg-paper border-edge/60 hover:border-clay/40"
+      }`}
+    >
+      <div className="flex items-center justify-between gap-1">
+        <span
+          className={`text-xs tabular-nums ${
+            isEsc ? "text-clay-deep font-medium" : "text-ink-deep"
+          }`}
+        >
+          {day}
+        </span>
+        <Dot level={level} />
+      </div>
+      <div
+        className={`mt-auto text-[10px] leading-tight truncate ${
+          isEsc ? "text-clay-deep" : "text-ink-soft"
+        }`}
+        title={summary}
+      >
+        {summary}
+      </div>
+    </button>
+  );
 }
 
-
-function truncate(s: string, n: number): string {
- return s.length <= n ? s : s.slice(0, n - 1) + "…";
+function EmptyDayCell({ day }: { day: number }) {
+  return (
+    <div className="aspect-square rounded-lg border border-edge/30 bg-cream/40 p-1.5">
+      <span className="text-xs text-ink-quiet/50 tabular-nums">{day}</span>
+    </div>
+  );
 }
 
+function DayDetailModal({
+  checkIn,
+  onClose,
+}: {
+  checkIn: CheckIn;
+  onClose: () => void;
+}) {
+  const decision = decide(checkIn, baseline);
+  const v = VERDICTS[decision.level];
 
-function longDate(iso: string): string {
- const d = new Date(iso);
- const y = d.getUTCFullYear();
- const m = String(d.getUTCMonth() + 1).padStart(2, "0");
- const day = String(d.getUTCDate()).padStart(2, "0");
- return `${y}-${m}-${day}`;
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [onClose]);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-end md:items-center justify-center p-0 md:p-6"
+      onClick={onClose}
+    >
+      <div className="absolute inset-0 bg-ink-deep/30 backdrop-blur-sm" />
+      <div
+        role="dialog"
+        aria-modal="true"
+        className="relative bg-paper rounded-t-2xl md:rounded-2xl border border-edge shadow-xl max-w-lg w-full max-h-[85vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close"
+          className="absolute top-3 right-3 w-8 h-8 rounded-full text-ink-quiet hover:text-ink-deep hover:bg-edge/60 transition-colors flex items-center justify-center text-xl leading-none"
+        >
+          ×
+        </button>
+
+        <div className="p-6 md:p-7 space-y-5">
+          <div>
+            <div className="text-[11px] uppercase tracking-[0.2em] text-ink-quiet font-medium">
+              {prettyDate(checkIn.timestamp)}
+            </div>
+            <div className={`mt-3 inline-flex items-center gap-2 ${v.ink}`}>
+              <Dot level={decision.level} />
+              <span className="text-[11px] uppercase tracking-[0.22em] font-medium">
+                {v.tag}
+              </span>
+            </div>
+            <h2 className={`mt-1 font-serif text-2xl leading-snug ${v.ink}`}>
+              {v.phrase}
+            </h2>
+          </div>
+
+          {decision.reasons.length > 0 && (
+            <div>
+              <div className="text-[10px] uppercase tracking-widest text-ink-quiet mb-2">
+                Because
+              </div>
+              <ul className="space-y-1.5 text-ink-soft text-sm">
+                {decision.reasons.map((r, i) => (
+                  <li key={i} className="leading-relaxed">
+                    <span className="mr-2 text-clay/70">·</span>
+                    {r}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {checkIn.extracted.symptoms.length > 0 && (
+            <div>
+              <div className="text-[10px] uppercase tracking-widest text-ink-quiet mb-2">
+                Symptoms
+              </div>
+              <ul className="text-sm text-ink-soft space-y-0.5">
+                {checkIn.extracted.symptoms.map((s, i) => (
+                  <li key={i}>
+                    <span className="mr-2 text-clay/70">·</span>
+                    {s.term}
+                    {s.isNew && (
+                      <span className="ml-2 text-[10px] uppercase tracking-widest text-clay-deep">
+                        new
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          <div>
+            <div className="text-[10px] uppercase tracking-widest text-ink-quiet mb-2">
+              In her own words
+            </div>
+            <blockquote
+              lang={checkIn.language}
+              className="font-serif text-lg text-ink-deep leading-snug"
+            >
+              &ldquo;{checkIn.rawTranscript}&rdquo;
+            </blockquote>
+            <p className="mt-2 text-ink-soft text-sm leading-relaxed">
+              &ldquo;{checkIn.translatedTranscript}&rdquo;
+            </p>
+          </div>
+
+          <div className="pt-4 border-t border-edge">
+            <div className="text-[10px] uppercase tracking-widest text-ink-quiet mb-1">
+              Med context
+            </div>
+            <div className="text-sm text-ink-soft">
+              {checkIn.medContext.name} &middot; day {checkIn.medContext.dayOfChange}
+            </div>
+            <div className="text-sm text-ink-soft mt-1">
+              Dose: {medicationLabel(checkIn.extracted.medicationTaken)} &middot;{" "}
+              How she felt: {effectLabel(checkIn.extracted.perceivedEffect)}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Calendar helpers — date math + per-cell text. No rule logic lives here; the
+// verdict level always comes from decide() upstream.
+// ─────────────────────────────────────────────────────────────────────────────
+
+function summarize(checkIn: CheckIn): string {
+  if (checkIn.extracted.symptoms.length > 0) {
+    return checkIn.extracted.symptoms[0].term;
+  }
+  if (checkIn.extracted.medicationTaken === "no") return "skipped";
+  return "ok";
+}
+
+function summarizeMonth(
+  verdicts: Map<string, EscalationDecision["level"]>,
+): string {
+  if (verdicts.size === 0) return "No check-ins this month.";
+  let escalates = 0;
+  let monitors = 0;
+  for (const level of verdicts.values()) {
+    if (level === "escalate") escalates++;
+    else if (level === "monitor") monitors++;
+  }
+  if (escalates > 0) {
+    return `${escalates} day${escalates === 1 ? "" : "s"} needed attention this month.`;
+  }
+  if (monitors > 0) {
+    return `${monitors} day${monitors === 1 ? "" : "s"} worth watching this month.`;
+  }
+  return `${verdicts.size} quiet day${verdicts.size === 1 ? "" : "s"} this month.`;
+}
+
+// Returns 7-column cells covering one calendar month. null = padding (before
+// the 1st or after the last day so the grid stays aligned to Sun…Sat columns).
+// Strings = ISO day keys (YYYY-MM-DD). All math is UTC so it stays in sync
+// with the seeded timestamps regardless of the viewer's local time zone.
+function buildMonthGrid(year: number, month: number): (string | null)[] {
+  const firstOfMonth = new Date(Date.UTC(year, month, 1));
+  const leading = firstOfMonth.getUTCDay(); // 0 = Sun
+  const daysInMonth = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
+  const cells: (string | null)[] = [];
+  for (let i = 0; i < leading; i++) cells.push(null);
+  for (let d = 1; d <= daysInMonth; d++) {
+    cells.push(
+      `${year}-${String(month + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`,
+    );
+  }
+  while (cells.length % 7 !== 0) cells.push(null);
+  return cells;
+}
+
+const MONTH_NAMES = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
+];
+
+function monthLabel(year: number, month: number): string {
+  return `${MONTH_NAMES[month]} ${year}`;
+}
+
+function monthFromIso(iso: string): { year: number; month: number } {
+  return {
+    year: parseInt(iso.slice(0, 4), 10),
+    month: parseInt(iso.slice(5, 7), 10) - 1,
+  };
+}
+
+function monthCompare(
+  a: { year: number; month: number },
+  b: { year: number; month: number },
+): number {
+  if (a.year !== b.year) return a.year - b.year;
+  return a.month - b.month;
+}
+
+function prettyDate(iso: string): string {
+  const d = new Date(iso);
+  return `${MONTH_NAMES[d.getUTCMonth()]} ${d.getUTCDate()}, ${d.getUTCFullYear()}`;
 }
 
 
