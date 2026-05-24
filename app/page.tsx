@@ -45,7 +45,7 @@ type Verdict = {
 const VERDICTS: Record<EscalationDecision["level"], Verdict> = {
   escalate: {
     phrase: "Worth a call today.",
-    tag: "Escalate",
+    tag: "Recommended follow-up",
     bg: "bg-clay-soft",
     bar: "bg-clay",
     ink: "text-clay-deep",
@@ -69,15 +69,126 @@ const VERDICTS: Record<EscalationDecision["level"], Verdict> = {
   },
 };
 
+// Inline SVG icon helper — uses Heroicons-style stroke paths
+function Icon({ d, className = "" }: { d: string; className?: string }) {
+  return (
+    <svg
+      className={`w-4 h-4 shrink-0 ${className}`}
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth={1.5}
+    >
+      <path strokeLinecap="round" strokeLinejoin="round" d={d} />
+    </svg>
+  );
+}
+
+type NavItemId = "checkin" | "history" | "trends" | "medications" | "careteam" | "settings";
+
+const NAV_ICONS: Record<NavItemId, string> = {
+  checkin:
+    "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2",
+  history: "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z",
+  trends: "M13 7h8m0 0v8m0-8l-8 8-4-4-6 6",
+  medications:
+    "M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z",
+  careteam:
+    "M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z",
+  settings:
+    "M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4",
+};
+
+const NAV_ITEMS: { id: NavItemId; label: string; active?: boolean }[] = [
+  { id: "checkin", label: "Check-in", active: true },
+  { id: "history", label: "History" },
+  { id: "trends", label: "Trends" },
+  { id: "medications", label: "Medications" },
+  { id: "careteam", label: "Care Team" },
+  { id: "settings", label: "Settings" },
+];
+
+function LeftSidebar() {
+  return (
+    <aside className="hidden md:flex w-56 shrink-0 h-full flex-col border-r border-edge bg-paper/70 print:hidden">
+      {/* Logo */}
+      <div className="px-5 py-6 border-b border-edge">
+        <div className="flex items-center gap-2.5">
+          <div className="w-7 h-7 rounded-lg bg-clay flex items-center justify-center shrink-0">
+            <span className="text-cream text-xs font-serif font-bold">T</span>
+          </div>
+          <div>
+            <div className="text-ink-deep font-serif text-base leading-none">Throughline</div>
+            <div className="text-[10px] text-ink-quiet mt-0.5">Caregiver companion</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Nav */}
+      <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
+        {NAV_ITEMS.map((item) => (
+          <button
+            key={item.id}
+            className={`w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors text-left ${
+              item.active
+                ? "bg-clay-soft/80 text-clay-deep font-medium"
+                : "text-ink-soft hover:bg-edge/60 hover:text-ink-deep"
+            }`}
+          >
+            <Icon
+              d={NAV_ICONS[item.id]}
+              className={item.active ? "text-clay" : "text-ink-quiet"}
+            />
+            {item.label}
+          </button>
+        ))}
+      </nav>
+
+      {/* Quick Tip */}
+      <div className="px-4 mb-3">
+        <div className="rounded-xl bg-sage-soft border border-sage/20 p-3.5">
+          <div className="text-[10px] uppercase tracking-widest text-sage font-semibold mb-1.5">
+            Quick Tip
+          </div>
+          <p className="text-xs text-ink-soft leading-relaxed">
+            Check in daily at the same time for the most consistent insights.
+          </p>
+        </div>
+      </div>
+
+      {/* Language selector */}
+      <div className="px-4 pb-5 pt-3 border-t border-edge">
+        <div className="text-[10px] uppercase tracking-widest text-ink-quiet mb-2">Language</div>
+        <div className="flex gap-1.5">
+          <button className="flex-1 text-xs py-1.5 rounded-lg bg-clay text-cream font-medium transition-colors">
+            EN
+          </button>
+          <button className="flex-1 text-xs py-1.5 rounded-lg border border-edge text-ink-quiet hover:border-clay/30 hover:text-ink-soft transition-colors">
+            日本語
+          </button>
+        </div>
+      </div>
+    </aside>
+  );
+}
+
+// Local mock — swap for useProfile once the context is wired up
+const mockProfile = { name: "Angel" };
+
 export default function Dashboard() {
   const [transcript, setTranscript] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<ApiResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [liveMode, setLiveMode] = useState(false);
+  const [greeting, setGreeting] = useState("Good morning");
 
   useEffect(() => {
     setLiveMode(new URLSearchParams(window.location.search).has("live"));
+    const hour = new Date().getHours();
+    if (hour < 12) setGreeting("Good morning");
+    else if (hour < 17) setGreeting("Good afternoon");
+    else setGreeting("Good evening");
   }, []);
 
   async function analyze(text: string, language = "ja") {
@@ -120,45 +231,91 @@ export default function Dashboard() {
   }
 
   return (
-    <main className="min-h-screen bg-cream text-ink-deep">
-      <div className="mx-auto max-w-2xl px-6 py-16 md:py-24">
-        <Header />
-        <div className="print:hidden">
-          <Controls
-            transcript={transcript}
-            setTranscript={setTranscript}
-            loading={loading}
-            onSeeded={runSeeded}
-            onAnalyze={() => analyze(transcript)}
-          />
-        </div>
-        {baseline.recentCheckIns.length > 0 && (
-          <TrendStrip history={baseline.recentCheckIns} todayResult={result} />
+    <div className="h-screen bg-cream flex overflow-hidden">
+      <LeftSidebar />
+
+      <div className="flex-1 flex min-w-0 overflow-hidden">
+        {/* Main workspace */}
+        <main className="flex-1 overflow-y-auto min-w-0">
+          <div className="max-w-2xl mx-auto px-6 py-10">
+            {/* Greeting */}
+            <div className="text-sm text-ink-quiet mb-1">
+              {greeting}, {mockProfile.name}
+            </div>
+
+            {/* Main heading */}
+            <h1 className="font-serif text-3xl md:text-4xl leading-tight text-ink-deep">
+              Today&rsquo;s check-in with Mom.
+            </h1>
+            <p className="mt-2 text-ink-soft text-sm md:text-base leading-relaxed max-w-xl">
+              A multilingual bridge between you and her day &mdash; in her own words, and in English.
+            </p>
+
+            {/* Controls */}
+            <div className="mt-8 print:hidden">
+              <Controls
+                transcript={transcript}
+                setTranscript={setTranscript}
+                loading={loading}
+                onSeeded={runSeeded}
+                onAnalyze={() => analyze(transcript)}
+              />
+            </div>
+
+            {/* Privacy banner */}
+            <PrivacyBanner />
+
+            {/* Trend strip */}
+            {baseline.recentCheckIns.length > 0 && (
+              <TrendStrip history={baseline.recentCheckIns} todayResult={result} />
+            )}
+
+            {/* Result main content */}
+            <section className="mt-8">
+              {loading && (
+                <div className="print:hidden">
+                  <LoadingCard />
+                </div>
+              )}
+              {!loading && error && (
+                <div className="print:hidden">
+                  <ErrorCard message={error} />
+                </div>
+              )}
+              {!loading && !error && result && <MainResultContent result={result} />}
+              {!loading && !error && !result && (
+                <div className="print:hidden">
+                  <EmptyHint />
+                </div>
+              )}
+            </section>
+          </div>
+        </main>
+
+        {/* Right insight panel — slides in when results are present */}
+        {!loading && !error && result && (
+          <aside className="w-[300px] xl:w-[340px] shrink-0 h-full overflow-y-auto border-l border-edge bg-paper/60 print:hidden">
+            <div className="p-6">
+              <RightPanel result={result} />
+            </div>
+          </aside>
         )}
-        <section className="mt-10">
-          {loading && <div className="print:hidden"><LoadingCard /></div>}
-          {!loading && error && <div className="print:hidden"><ErrorCard message={error} /></div>}
-          {!loading && !error && result && <ResultCard result={result} />}
-          {!loading && !error && !result && <div className="print:hidden"><EmptyHint /></div>}
-        </section>
       </div>
-    </main>
+    </div>
   );
 }
 
-function Header() {
+function PrivacyBanner() {
   return (
-    <header className="mb-12">
-      <div className="text-xs uppercase tracking-[0.22em] text-clay font-medium">
-        Throughline
-      </div>
-      <h1 className="mt-3 font-serif text-4xl md:text-5xl leading-tight text-ink-deep">
-        Today&rsquo;s check-in with Mom.
-      </h1>
-      <p className="mt-3 text-ink-soft text-base md:text-lg leading-relaxed">
-        A bilingual bridge between you and her day &mdash; in her own words, and in English.
+    <div className="mt-5 flex items-start gap-2.5 rounded-xl border border-edge bg-paper/60 px-4 py-2.5">
+      <Icon
+        d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"
+        className="text-sage mt-0.5"
+      />
+      <p className="text-xs text-ink-quiet leading-relaxed">
+        Your data is private and secure. We never share it without your permission.
       </p>
-    </header>
+    </div>
   );
 }
 
@@ -176,7 +333,7 @@ function Controls({
   onAnalyze: () => void;
 }) {
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <div className="flex flex-col sm:flex-row gap-3">
         <SeededButton
           disabled={loading}
@@ -202,21 +359,42 @@ function Controls({
         <textarea
           value={transcript}
           onChange={(e) => setTranscript(e.target.value)}
-          placeholder="Paste Mom's transcript here (any language)…"
+          placeholder="Describe how Mom feels today — any language."
           rows={4}
-          className="w-full rounded-lg border border-edge bg-paper px-4 py-3 text-ink-deep placeholder:text-ink-quiet focus:outline-none focus:border-clay/60 focus:ring-2 focus:ring-clay/15 resize-none transition-colors"
+          className="w-full rounded-xl border border-edge bg-paper px-4 py-3 text-ink-deep placeholder:text-ink-quiet focus:outline-none focus:border-clay/60 focus:ring-2 focus:ring-clay/15 resize-none transition-colors"
           disabled={loading}
         />
-        <div className="mt-3 flex justify-end">
+        <div className="mt-2 flex items-center gap-2">
+          {/* Input method pills — visual only, no new functionality */}
+          <div className="flex gap-1.5">
+            <InputMethodPill label="Type" active />
+            <InputMethodPill label="Voice" />
+            <InputMethodPill label="Translate" />
+          </div>
+          <div className="flex-1" />
           <button
             onClick={onAnalyze}
             disabled={loading || !transcript.trim()}
-            className="rounded-full bg-clay px-6 py-2.5 text-sm font-medium text-cream hover:bg-clay-deep disabled:bg-ink-quiet/40 disabled:cursor-not-allowed transition-colors"
+            className="rounded-full bg-clay px-6 py-2 text-sm font-medium text-cream hover:bg-clay-deep disabled:bg-ink-quiet/40 disabled:cursor-not-allowed transition-colors"
           >
             {loading ? "Analyzing…" : "Analyze"}
           </button>
         </div>
       </div>
+    </div>
+  );
+}
+
+function InputMethodPill({ label, active }: { label: string; active?: boolean }) {
+  return (
+    <div
+      className={`rounded-full px-3 py-1 text-xs border select-none ${
+        active
+          ? "border-clay/40 bg-clay-soft/50 text-clay-deep"
+          : "border-edge text-ink-quiet"
+      }`}
+    >
+      {label}
     </div>
   );
 }
@@ -236,9 +414,9 @@ function SeededButton({
     <button
       onClick={onClick}
       disabled={disabled}
-      className="flex-1 group rounded-2xl border border-edge bg-paper px-5 py-4 text-left hover:border-clay/40 hover:bg-clay-soft/40 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+      className="flex-1 group rounded-2xl border border-edge bg-paper px-5 py-4 text-left hover:border-clay/40 hover:bg-clay-soft/30 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
     >
-      <div className="text-base text-ink-deep group-hover:text-clay-deep transition-colors">
+      <div className="text-sm font-medium text-ink-deep group-hover:text-clay-deep transition-colors">
         {label}
       </div>
       <div className="mt-0.5 text-xs uppercase tracking-wider text-ink-quiet">{sub}</div>
@@ -274,39 +452,11 @@ function LoadingCard() {
   );
 }
 
-function ResultCard({ result }: { result: ApiResponse }) {
+// Main workspace result content: bilingual bridge, medication, brief
+function MainResultContent({ result }: { result: ApiResponse }) {
   const { checkIn, decision } = result;
-  const v = VERDICTS[decision.level];
   return (
-    <article className="space-y-10">
-      {/* Verdict + reasons */}
-      <div className={`rounded-2xl ${v.bg} ring-1 ${v.ring} overflow-hidden`}>
-        <div className="flex">
-          <div className={`w-1.5 ${v.bar}`} />
-          <div className="flex-1 p-7 md:p-9">
-            <div className={`text-[11px] uppercase tracking-[0.22em] font-medium ${v.ink}`}>
-              {v.tag}
-            </div>
-            <h2 className={`mt-3 font-serif text-3xl md:text-4xl leading-snug ${v.ink}`}>
-              {v.phrase}
-            </h2>
-            {decision.reasons.length > 0 && (
-              <div className="mt-6">
-                <div className="text-xs uppercase tracking-widest text-ink-quiet mb-2">Because</div>
-                <ul className="space-y-1.5 text-ink-soft">
-                  {decision.reasons.map((r, i) => (
-                    <li key={i} className="leading-relaxed">
-                      <span className="mr-2 text-clay/70">·</span>
-                      {r}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
+    <article className="space-y-8">
       {/* Bilingual bridge */}
       <Section label="In her own words">
         <blockquote
@@ -320,41 +470,6 @@ function ResultCard({ result }: { result: ApiResponse }) {
           &ldquo;{checkIn.translatedTranscript}&rdquo;
         </p>
       </Section>
-
-      {/* Ambiguity — the signature feature */}
-      {checkIn.ambiguity.length > 0 && (
-        <Section label="Needs clarifying">
-          <div className="space-y-4">
-            {checkIn.ambiguity.map((a, i) => (
-              <div
-                key={i}
-                className="rounded-xl bg-amber-bg/60 border border-amber-warm/25 p-5"
-              >
-                <div className="font-serif text-xl text-amber-deep" lang={checkIn.language}>
-                  &ldquo;{a.phrase}&rdquo;
-                </div>
-                <div className="mt-3">
-                  <div className="text-[11px] uppercase tracking-widest text-amber-warm">Could mean</div>
-                  <ul className="mt-1.5 text-ink-soft text-sm space-y-0.5">
-                    {a.couldMean.map((c, j) => (
-                      <li key={j}>
-                        <span className="mr-2 text-amber-warm/60">·</span>
-                        {c}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-                <div className="mt-4 pt-4 border-t border-amber-warm/20">
-                  <div className="text-[11px] uppercase tracking-widest text-amber-warm mb-1.5">
-                    Ask her
-                  </div>
-                  <p className="text-ink-deep leading-relaxed">{a.followUp}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </Section>
-      )}
 
       {/* Medication */}
       <Section label="Medication">
@@ -380,7 +495,7 @@ function ResultCard({ result }: { result: ApiResponse }) {
         </dl>
       </Section>
 
-      {/* Brief — for the next appointment */}
+      {/* Brief */}
       <BriefCard result={result} />
 
       {/* Audit trail */}
@@ -391,10 +506,94 @@ function ResultCard({ result }: { result: ApiResponse }) {
   );
 }
 
+// Right insight panel: verdict card + needs clarification
+function RightPanel({ result }: { result: ApiResponse }) {
+  const { checkIn, decision } = result;
+  const v = VERDICTS[decision.level];
+
+  return (
+    <div className="space-y-6">
+      <div className="text-[11px] uppercase tracking-[0.2em] text-ink-quiet font-medium">
+        Today&rsquo;s insight
+      </div>
+
+      {/* Verdict card */}
+      <div className={`rounded-2xl ${v.bg} ring-1 ${v.ring} overflow-hidden`}>
+        <div className="flex">
+          <div className={`w-1.5 ${v.bar} shrink-0`} />
+          <div className="flex-1 p-5">
+            <div className={`text-[10px] uppercase tracking-[0.22em] font-medium ${v.ink}`}>
+              {v.tag}
+            </div>
+            <h2 className={`mt-2 font-serif text-2xl leading-snug ${v.ink}`}>
+              {v.phrase}
+            </h2>
+            {decision.reasons.length > 0 && (
+              <div className="mt-4">
+                <div className="text-[10px] uppercase tracking-widest text-ink-quiet mb-2">
+                  Because
+                </div>
+                <ul className="space-y-1.5 text-ink-soft text-sm">
+                  {decision.reasons.map((r, i) => (
+                    <li key={i} className="leading-relaxed">
+                      <span className="mr-2 text-clay/70">·</span>
+                      {r}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Needs clarification */}
+      {checkIn.ambiguity.length > 0 && (
+        <div>
+          <div className="text-[11px] uppercase tracking-[0.2em] text-ink-quiet font-medium mb-3">
+            Needs clarification
+          </div>
+          <div className="space-y-3">
+            {checkIn.ambiguity.map((a, i) => (
+              <div
+                key={i}
+                className="rounded-xl bg-amber-bg/60 border border-amber-warm/25 p-4"
+              >
+                <div className="font-serif text-lg text-amber-deep" lang={checkIn.language}>
+                  &ldquo;{a.phrase}&rdquo;
+                </div>
+                <div className="mt-2.5">
+                  <div className="text-[10px] uppercase tracking-widest text-amber-warm">
+                    Could mean
+                  </div>
+                  <ul className="mt-1 text-ink-soft text-xs space-y-0.5">
+                    {a.couldMean.map((c, j) => (
+                      <li key={j}>
+                        <span className="mr-1.5 text-amber-warm/60">·</span>
+                        {c}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div className="mt-3 pt-3 border-t border-amber-warm/20">
+                  <div className="text-[10px] uppercase tracking-widest text-amber-warm mb-1">
+                    Ask her
+                  </div>
+                  <p className="text-ink-deep text-sm leading-relaxed">{a.followUp}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function BriefCard({ result }: { result: ApiResponse }) {
   const { brief } = result;
   return (
-    <Section label="For the next appointment">
+    <Section label="What her doctor should know">
       <div className="rounded-2xl border border-edge bg-paper p-6 md:p-7 space-y-6">
         <h3 className="font-serif text-xl md:text-2xl leading-snug text-ink-deep">
           {brief.headline}
@@ -458,7 +657,7 @@ function CopyButton({ result }: { result: ApiResponse }) {
   return (
     <button
       onClick={handleCopy}
-      className="rounded-full border border-edge bg-paper px-4 py-2 text-sm text-ink-deep hover:border-clay/40 hover:bg-clay-soft/40 transition-colors"
+      className="rounded-full border border-edge bg-paper px-4 py-2 text-sm text-ink-deep hover:border-clay/40 hover:bg-clay-soft/30 transition-colors"
     >
       {copied ? "Copied" : "Copy summary"}
     </button>
@@ -469,7 +668,7 @@ function PrintButton() {
   return (
     <button
       onClick={() => window.print()}
-      className="rounded-full border border-edge bg-paper px-4 py-2 text-sm text-ink-deep hover:border-clay/40 hover:bg-clay-soft/40 transition-colors"
+      className="rounded-full border border-edge bg-paper px-4 py-2 text-sm text-ink-deep hover:border-clay/40 hover:bg-clay-soft/30 transition-colors"
     >
       Print
     </button>
@@ -508,7 +707,9 @@ function formatPlainTextSummary(result: ApiResponse): string {
 function Section({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <div className="text-xs uppercase tracking-[0.22em] text-clay font-medium mb-4">{label}</div>
+      <div className="text-xs uppercase tracking-[0.22em] text-clay font-medium mb-4">
+        {label}
+      </div>
       {children}
     </div>
   );
@@ -530,7 +731,7 @@ function TrendStrip({
   const caption = captionFromTrend(history, todayResult);
 
   return (
-    <section className="mt-12 pb-6 border-b border-edge">
+    <section className="mt-8 pb-6 border-b border-edge">
       <div className="flex items-end justify-between gap-6">
         <div>
           <div className="text-[10px] uppercase tracking-[0.22em] text-ink-quiet mb-3">
