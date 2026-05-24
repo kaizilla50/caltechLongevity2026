@@ -12,7 +12,7 @@ import { decide } from "@/rules";
 import baselineJson from "@/baseline.json";
 import demoCacheJson from "@/demo-cache.json";
 import { useProfile } from "@/profile-context";
-import type { Medication } from "@/profile";
+import type { Appointment, CareTeamMember, Medication } from "@/profile";
 
 
 type ApiResponse = {
@@ -117,7 +117,7 @@ const NAV_ITEMS: { id: NavItemId; label: string; clickable: boolean }[] = [
  { id: "history", label: "History", clickable: true },
  { id: "trends", label: "Trends", clickable: false },
  { id: "medications", label: "Medications", clickable: true },
- { id: "careteam", label: "Care Team", clickable: false },
+ { id: "careteam", label: "Care Team", clickable: true },
  { id: "settings", label: "Settings", clickable: false },
 ];
 
@@ -356,6 +356,8 @@ export default function Dashboard() {
            {activeView === "history" && <HistoryView />}
 
            {activeView === "medications" && <MedicationsView />}
+
+           {activeView === "careteam" && <CareTeamView />}
          </div>
        </main>
 
@@ -1081,6 +1083,99 @@ function relativeAge(startedOn: string): string {
   }
   const years = Math.floor(days / 365);
   return `${years} year${years === 1 ? "" : "s"} ago`;
+}
+
+// Care Team view — read-only cards per clinician. Each card carries an
+// "Upcoming" badge when profile.appointments has a future visit booked with
+// that doctor (matched by name). Today (demo) is 2026-05-24, so Dr. Yamamoto's
+// 2026-05-26 cardiology follow-up surfaces here next to the recent dizziness.
+function CareTeamView() {
+  const { profile } = useProfile();
+
+  // Soonest upcoming appointment per doctor name. We match on doctorName
+  // since CareTeamMember and Appointment don't share an id; the seed keeps
+  // these spellings in sync.
+  const upcomingByName = useMemo(() => {
+    const today = new Date().toISOString().slice(0, 10);
+    const m = new Map<string, Appointment>();
+    const futures = profile.appointments
+      .filter((a) => a.date >= today)
+      .sort((a, b) => a.date.localeCompare(b.date));
+    for (const a of futures) {
+      if (!m.has(a.doctorName)) m.set(a.doctorName, a);
+    }
+    return m;
+  }, [profile.appointments]);
+
+  return (
+    <>
+      <div className="text-sm text-ink-quiet mb-1">Care Team</div>
+      <h1 className="font-serif text-3xl md:text-4xl leading-tight text-ink-deep">
+        Mom&rsquo;s circle of care.
+      </h1>
+      <p className="mt-2 text-ink-soft text-sm md:text-base leading-relaxed max-w-xl">
+        {profile.careTeam.length} clinicians on call.
+      </p>
+
+      <div className="mt-8 space-y-5">
+        {profile.careTeam.map((member) => (
+          <CareTeamCard
+            key={member.id}
+            member={member}
+            upcoming={upcomingByName.get(member.name) ?? null}
+          />
+        ))}
+      </div>
+    </>
+  );
+}
+
+function CareTeamCard({
+  member,
+  upcoming,
+}: {
+  member: CareTeamMember;
+  upcoming: Appointment | null;
+}) {
+  return (
+    <article className="rounded-2xl border border-edge bg-paper p-6 md:p-7 space-y-5">
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <h2 className="font-serif text-xl md:text-2xl leading-snug text-ink-deep">
+            {member.name}
+          </h2>
+          <div className="mt-1 text-sm text-ink-soft">{member.role}</div>
+        </div>
+        {upcoming && (
+          <span className="shrink-0 text-[10px] uppercase tracking-widest text-clay-deep bg-clay-soft border border-clay/30 px-2.5 py-1 rounded-full font-medium">
+            Upcoming: {prettyDate(upcoming.date)}
+          </span>
+        )}
+      </div>
+
+      <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
+        <div>
+          <dt className="text-xs uppercase tracking-widest text-ink-quiet mb-1">
+            Phone
+          </dt>
+          <dd>
+            <a
+              href={`tel:${member.phone.replace(/[^+\d]/g, "")}`}
+              className="text-ink-deep hover:text-clay-deep transition-colors tabular-nums"
+            >
+              {member.phone}
+            </a>
+          </dd>
+        </div>
+        <div>
+          <dt className="text-xs uppercase tracking-widest text-ink-quiet mb-1">
+            Last visit
+          </dt>
+          <dd className="text-ink-deep">{prettyDate(member.lastVisit)}</dd>
+        </div>
+      </dl>
+    </article>
+  );
 }
 
 // Right insight panel: verdict card + needs clarification
