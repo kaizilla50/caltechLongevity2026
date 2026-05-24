@@ -171,7 +171,10 @@ function UserIcon({ className = "w-4 h-4" }: { className?: string }) {
 function SpiralIcon({ className = "w-5 h-5" }: { className?: string }) {
  return (
    <svg className={`${className} shrink-0`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" aria-hidden="true">
-     <path d="M5 12a4 4 0 0 1 8 0 a3 3 0 0 1 -6 0 a2 2 0 0 1 4 0 a1 1 0 0 1 -2 0" />
+     {/* Spiral sized to fill the viewBox (x:3-21, y:3-21) so it visually
+         matches the JointIcon's footprint — same w-14 container, same
+         apparent icon size. */}
+     <path d="M3 12 a9 9 0 0 1 18 0 a7 7 0 0 1 -14 0 a5 5 0 0 1 10 0 a3 3 0 0 1 -6 0 a1 1 0 0 1 2 0" />
    </svg>
  );
 }
