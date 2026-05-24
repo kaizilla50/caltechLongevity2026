@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node -e ' *)",
+      "Bash(curl -s -o NUL -w \"GET /icon.svg → %{http_code}\\\\n\" --max-time 5 http://localhost:3000/icon.svg)",
+      "Bash(curl -s -o NUL -w \"GET /icon         → %{http_code}\\\\n\" --max-time 5 http://localhost:3000/icon)"
+    ]
+  }
+}

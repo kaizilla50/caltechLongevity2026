@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 100" role="img" aria-label="Curaphi">
+  <path d="M30,93 C21,74 41,46 30,19" fill="none" stroke="#2A6B5E" stroke-width="4" stroke-linecap="round"/>
+  <g fill="#2A6B5E">
+    <path transform="translate(27,74) rotate(-42) scale(0.8)" d="M0,0 Q8.5,-11 0,-22 Q-8.5,-11 0,0 Z"/>
+    <path transform="translate(34,74) rotate(42) scale(0.8)" d="M0,0 Q8.5,-11 0,-22 Q-8.5,-11 0,0 Z"/>
+    <path transform="translate(30,49) rotate(-42) scale(0.8)" d="M0,0 Q8.5,-11 0,-22 Q-8.5,-11 0,0 Z"/>
+    <path transform="translate(37,49) rotate(42) scale(0.8)" d="M0,0 Q8.5,-11 0,-22 Q-8.5,-11 0,0 Z"/>
+    <path transform="translate(27,29) rotate(-38) scale(0.8)" d="M0,0 Q8.5,-11 0,-22 Q-8.5,-11 0,0 Z"/>
+    <path transform="translate(33,29) rotate(38) scale(0.8)" d="M0,0 Q8.5,-11 0,-22 Q-8.5,-11 0,0 Z"/>
+    <path transform="translate(30,21) rotate(0) scale(0.8)" d="M0,0 Q8.5,-11 0,-22 Q-8.5,-11 0,0 Z"/>
+  </g>
+  <g fill="#B98A2E">
+    <ellipse cx="0" cy="0" rx="3.4" ry="4.8" transform="translate(23,77) scale(0.9)"/>
+    <ellipse cx="0" cy="0" rx="3.4" ry="4.8" transform="translate(39,72) scale(0.9)"/>
+    <ellipse cx="0" cy="0" rx="3.4" ry="4.8" transform="translate(23,52) scale(0.9)"/>
+    <ellipse cx="0" cy="0" rx="3.4" ry="4.8" transform="translate(40,53) scale(0.9)"/>
+    <ellipse cx="0" cy="0" rx="3.4" ry="4.8" transform="translate(31,32) scale(0.9)"/>
+  </g>
+</svg>

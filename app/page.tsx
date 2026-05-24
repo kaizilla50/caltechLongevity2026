@@ -15,6 +15,7 @@ import { useProfile } from "@/profile-context";
 import type { Appointment, CareTeamMember, Medication, Profile } from "@/profile";
 import { generateSuggestions, type Suggestion } from "@/suggestions";
 import { findEpisodes, type Episode } from "@/recovery";
+import { CuraphiMark } from "@/components/CuraphiMark";
 
 
 type ApiResponse = {
@@ -96,13 +97,13 @@ function Icon({ d, className = "" }: { d: string; className?: string }) {
  );
 }
 
-// Small filled heart for the greeting. Sized to sit on the cap-line of
-// surrounding text-sm copy; uses an inline style so it stays on the warm
-// brand palette without depending on Tailwind's default red ramp.
-function HeartIcon() {
+// Small filled heart. Sits on the cap-line of surrounding copy. Uses an
+// inline style so it stays on the warm brand palette without depending on
+// Tailwind's default red ramp.
+function HeartIcon({ className = "w-3 h-3" }: { className?: string }) {
  return (
    <svg
-     className="w-3 h-3 shrink-0"
+     className={`${className} shrink-0`}
      viewBox="0 0 24 24"
      fill="currentColor"
      style={{ color: "#C24F4F" }}
@@ -113,21 +114,123 @@ function HeartIcon() {
  );
 }
 
+// Stroke icons reused across the check-in view. Each wraps a single SVG path
+// in `currentColor` so the parent's `text-…` class controls the tone.
+function PhoneIcon({ className = "w-4 h-4" }: { className?: string }) {
+ return (
+   <svg className={`${className} shrink-0`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} aria-hidden="true">
+     <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z" />
+   </svg>
+ );
+}
 
-type NavItemId = "checkin" | "history" | "trends" | "medications" | "careteam" | "settings";
+function LightbulbIcon({ className = "w-4 h-4" }: { className?: string }) {
+ return (
+   <svg className={`${className} shrink-0`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} aria-hidden="true">
+     <path strokeLinecap="round" strokeLinejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 001.5-.189m-1.5.189a6.01 6.01 0 01-1.5-.189m3.75 7.478a12.06 12.06 0 01-4.5 0m3.75 2.383a14.406 14.406 0 01-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 10-7.517 0c.85.493 1.509 1.333 1.509 2.316V18" />
+   </svg>
+ );
+}
+
+function MicIcon({ className = "w-4 h-4" }: { className?: string }) {
+ return (
+   <svg className={`${className} shrink-0`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} aria-hidden="true">
+     <path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z" />
+   </svg>
+ );
+}
+
+function KeyboardIcon({ className = "w-4 h-4" }: { className?: string }) {
+ return (
+   <svg className={`${className} shrink-0`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} aria-hidden="true">
+     <rect x="3" y="7" width="18" height="10" rx="1.75" />
+     <path strokeLinecap="round" d="M7 11h.5M11 11h.5M15 11h.5M7 14h10" />
+   </svg>
+ );
+}
+
+function SparklesIcon({ className = "w-4 h-4" }: { className?: string }) {
+ return (
+   <svg className={`${className} shrink-0`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} aria-hidden="true">
+     <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z" />
+   </svg>
+ );
+}
+
+// Heroicons user-circle, used by the profile bubble next to the greeting.
+function UserIcon({ className = "w-4 h-4" }: { className?: string }) {
+ return (
+   <svg className={`${className} shrink-0`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} aria-hidden="true">
+     <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+   </svg>
+ );
+}
+
+// Stylized two-turn inward spiral. Reads as motion/dizziness without needing
+// a literal vertigo metaphor.
+function SpiralIcon({ className = "w-5 h-5" }: { className?: string }) {
+ return (
+   <svg className={`${className} shrink-0`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" aria-hidden="true">
+     <path d="M5 12a4 4 0 0 1 8 0 a3 3 0 0 1 -6 0 a2 2 0 0 1 4 0 a1 1 0 0 1 -2 0" />
+   </svg>
+ );
+}
+
+// Orthopedic joint: a femoral condyle (rounded bottom of the upper bone), a
+// tibial plateau (flat top of the lower bone) facing it, and a thin cartilage
+// band running through the joint space. Reads as a medical joint diagram even
+// at small sizes.
+function JointIcon({ className = "w-5 h-5" }: { className?: string }) {
+ return (
+   <svg className={`${className} shrink-0`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+     {/* Upper bone — vertical shaft narrowing to a rounded condyle */}
+     <path d="M9 3 v6 q0 2 3 2 q3 0 3 -2 v-6" />
+     {/* Lower bone — flat tibial plateau with slight side ridges, shaft below */}
+     <path d="M7.5 14 h9 M9 14 q0 -1 3 -1 q3 0 3 1 M9 14 v7 M15 14 v7" />
+     {/* Cartilage band running through the joint space */}
+     <path d="M7 12 h10" strokeDasharray="1.5 1.5" opacity="0.7" />
+   </svg>
+ );
+}
+
+// Filled medical cross — used only by the Medications nav slot. Filled
+// (not stroked) so it reads as a proper Red-Cross symbol; inherits color via
+// `currentColor`, so the parent controls the clay tint.
+function MedicalCrossIcon({ className = "w-4 h-4" }: { className?: string }) {
+ return (
+   <svg className={`${className} shrink-0`} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+     <path d="M10 4h4v6h6v4h-6v6h-4v-6H4v-4h6z" />
+   </svg>
+ );
+}
+
+// Small filled "i" badge in a soft sky-blue. Inline style keeps the muted-
+// healthcare blue without adding a Tailwind color or extending the theme.
+function InfoBadge({ className = "" }: { className?: string }) {
+ return (
+   <span
+     aria-hidden="true"
+     className={`inline-flex items-center justify-center w-3.5 h-3.5 rounded-full text-[9px] font-bold leading-none shrink-0 ${className}`}
+     style={{ backgroundColor: "#7FA9C7", color: "#FFFFFF" }}
+   >
+     i
+   </span>
+ );
+}
+
+
+type NavItemId = "checkin" | "history" | "trends" | "medications" | "careteam";
 
 
 const NAV_ICONS: Record<NavItemId, string> = {
  checkin:
-   "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2",
+   "M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75",
  history: "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z",
  trends: "M13 7h8m0 0v8m0-8l-8 8-4-4-6 6",
  medications:
-   "M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z",
+   "M3 8H21a4 4 0 0 1 0 8H3a4 4 0 0 1 0 -8zM12 8V16",
  careteam:
    "M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z",
- settings:
-   "M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4",
 };
 
 
@@ -137,7 +240,6 @@ const NAV_ITEMS: { id: NavItemId; label: string; clickable: boolean }[] = [
  { id: "trends", label: "Trends", clickable: true },
  { id: "medications", label: "Medications", clickable: true },
  { id: "careteam", label: "Care Team", clickable: true },
- { id: "settings", label: "Settings", clickable: false },
 ];
 
 
@@ -153,9 +255,7 @@ function LeftSidebar({
      {/* Logo */}
      <div className="px-5 py-6 border-b border-edge">
        <div className="flex items-center gap-2.5">
-         <div className="w-7 h-7 rounded-lg bg-clay flex items-center justify-center shrink-0">
-           <span className="text-cream text-xs font-serif font-bold">C</span>
-         </div>
+         <CuraphiMark className="h-11 w-auto shrink-0" title="" />
          <div className="min-w-0">
            <div className="text-ink-deep font-serif text-base leading-none tracking-tight">CuraPhi</div>
            <div className="text-[10px] text-ink-quiet mt-1 leading-tight">Bringing words. Caring better.</div>
@@ -184,16 +284,28 @@ function LeftSidebar({
              aria-current={isActive ? "page" : undefined}
              className={`${base} ${state}`}
            >
-             <Icon
-               d={NAV_ICONS[item.id]}
-               className={
-                 isActive
-                   ? "text-clay"
-                   : item.clickable
-                     ? "text-ink-quiet"
-                     : "text-ink-quiet/50"
-               }
-             />
+             {item.id === "medications" ? (
+               <MedicalCrossIcon
+                 className={`w-4 h-4 ${
+                   isActive
+                     ? "text-clay"
+                     : item.clickable
+                       ? "text-ink-quiet"
+                       : "text-ink-quiet/50"
+                 }`}
+               />
+             ) : (
+               <Icon
+                 d={NAV_ICONS[item.id]}
+                 className={
+                   isActive
+                     ? "text-clay"
+                     : item.clickable
+                       ? "text-ink-quiet"
+                       : "text-ink-quiet/50"
+                 }
+               />
+             )}
              <span className="flex-1">{item.label}</span>
              {!item.clickable && (
                <span className="text-[9px] uppercase tracking-widest text-ink-quiet/80 bg-edge/60 px-1.5 py-0.5 rounded">
@@ -209,7 +321,8 @@ function LeftSidebar({
      {/* Quick Tip */}
      <div className="px-4 mb-3">
        <div className="rounded-xl bg-sage-soft border border-sage/20 p-3.5">
-         <div className="text-[10px] uppercase tracking-widest text-sage font-semibold mb-1.5">
+         <div className="text-[10px] uppercase tracking-widest text-sage font-semibold mb-1.5 inline-flex items-center gap-1.5">
+           <InfoBadge />
            Quick Tip
          </div>
          <p className="text-xs text-ink-soft leading-relaxed">
@@ -217,38 +330,7 @@ function LeftSidebar({
          </p>
        </div>
      </div>
-
-
-     {/* Language toggle — visual only for now; selection is local sidebar state */}
-     <LanguageToggle />
    </aside>
- );
-}
-
-function LanguageToggle() {
- const [lang, setLang] = useState<"en" | "ja">("en");
- const pill = (id: "en" | "ja", label: string) => (
-   <button
-     type="button"
-     onClick={() => setLang(id)}
-     aria-pressed={lang === id}
-     className={`flex-1 text-xs py-1.5 rounded-lg text-center transition-colors ${
-       lang === id
-         ? "bg-clay text-cream font-medium"
-         : "border border-edge text-ink-quiet hover:border-clay/40 hover:text-ink-soft"
-     }`}
-   >
-     {label}
-   </button>
- );
- return (
-   <div className="px-4 pb-5 pt-3 border-t border-edge">
-     <div className="text-[10px] uppercase tracking-widest text-ink-quiet mb-2">Language</div>
-     <div className="flex gap-1.5">
-       {pill("en", "EN")}
-       {pill("ja", "日本語")}
-     </div>
-   </div>
  );
 }
 
@@ -373,16 +455,18 @@ export default function Dashboard() {
          <div className="max-w-2xl mx-auto px-6 py-10">
            {activeView === "checkin" && (
              <>
-               {/* Greeting */}
-               <div className="text-sm text-ink-quiet mb-1 inline-flex items-center gap-1">
-                 <span>{greeting}, {profile.caregiverName}</span>
-                 <HeartIcon />
+               {/* Greeting + Mom's Profile bubble (across-from layout) */}
+               <div className="flex items-center justify-between gap-3 mb-1">
+                 <div className="text-sm text-ink-quiet">
+                   {greeting}, {profile.caregiverName}
+                 </div>
+                 <ProfileBubble />
                </div>
 
 
-               {/* Main heading */}
+               {/* Main heading — heart renders as inline punctuation after "Mom" */}
                <h1 className="font-serif text-3xl md:text-4xl leading-tight text-ink-deep">
-                 Today&rsquo;s check-in with Mom.
+                 Today&rsquo;s check-in with Mom<HeartIcon className="w-3.5 h-3.5 md:w-4 md:h-4 inline-block ml-1 align-baseline" />
                </h1>
                <p className="mt-2 text-ink-soft text-sm md:text-base leading-relaxed max-w-xl">
                  A multilingual bridge between you and her day &mdash; in her own words, and in English.
@@ -480,7 +564,7 @@ function SuggestionsCard({
   return (
     <div>
       <div className="text-xs uppercase tracking-[0.22em] text-clay font-medium mb-3">
-        Today, you might check on…
+        Today, you might check on<span className="tracking-[0.4em] ml-0.5">...</span>
       </div>
       <div className="space-y-2">
         {suggestions.map((s) => (
@@ -496,6 +580,21 @@ function SuggestionsCard({
         ))}
       </div>
     </div>
+  );
+}
+
+// Rounded pill on the right of the greeting line — premium quick-access feel.
+// Rendered as a button so it picks up cursor + hover affordance; click is a
+// no-op for now (no profile screen wired yet) per spec.
+function ProfileBubble() {
+  return (
+    <button
+      type="button"
+      className="shrink-0 inline-flex items-center gap-2 rounded-full border border-edge bg-paper/80 px-3 py-1.5 text-xs text-ink-soft hover:border-clay/40 hover:text-ink-deep transition-colors"
+    >
+      <UserIcon className="w-4 h-4 text-sage" />
+      <span>Mom&rsquo;s Profile</span>
+    </button>
   );
 }
 
@@ -529,6 +628,84 @@ function Controls({
  onAnalyze: () => void;
  textareaRef?: React.Ref<HTMLTextAreaElement>;
 }) {
+ // Feature-detect SpeechRecognition. We optimistically render the Voice pill
+ // as enabled during SSR + initial client render (so there's no hydration
+ // flicker), then disable it after mount if the API isn't there.
+ const [voiceSupported, setVoiceSupported] = useState(true);
+ const [voiceStatus, setVoiceStatus] = useState<"idle" | "listening">("idle");
+ const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
+ // Snapshot of the textarea contents at the moment Voice was clicked, so the
+ // dictated text appends to (rather than replaces) anything already typed.
+ const voiceBaseRef = useRef("");
+
+ useEffect(() => {
+   if (typeof window === "undefined") return;
+   setVoiceSupported(!!getSpeechRecognitionCtor());
+ }, []);
+
+ // If Controls unmounts mid-dictation (e.g. user navigates away), stop the
+ // recognizer so the mic indicator doesn't get stuck.
+ useEffect(() => {
+   return () => {
+     try {
+       recognitionRef.current?.stop?.();
+     } catch {}
+   };
+ }, []);
+
+ function toggleVoice() {
+   if (!voiceSupported) return;
+   if (voiceStatus === "listening") {
+     try {
+       recognitionRef.current?.stop?.();
+     } catch {}
+     return;
+   }
+   const Ctor = getSpeechRecognitionCtor();
+   if (!Ctor) {
+     setVoiceSupported(false);
+     return;
+   }
+   const rec = new Ctor();
+   rec.lang = "en-US";
+   rec.continuous = true;
+   rec.interimResults = true;
+
+   voiceBaseRef.current = transcript;
+
+   rec.onresult = (event) => {
+     let voiceText = "";
+     for (let i = 0; i < event.results.length; i++) {
+       voiceText += event.results[i][0].transcript;
+     }
+     const base = voiceBaseRef.current;
+     const sep = base && !/\s$/.test(base) ? " " : "";
+     setTranscript(base + sep + voiceText);
+   };
+
+   rec.onerror = (e) => {
+     // Permission denied, no-speech, network, etc. — fall back to idle.
+     // Logging only; no toast/popup so failures stay quiet for the demo.
+     console.warn("SpeechRecognition error:", e?.error);
+     setVoiceStatus("idle");
+     recognitionRef.current = null;
+   };
+
+   rec.onend = () => {
+     setVoiceStatus("idle");
+     recognitionRef.current = null;
+   };
+
+   try {
+     rec.start();
+     setVoiceStatus("listening");
+     recognitionRef.current = rec;
+   } catch (err) {
+     console.warn("Failed to start SpeechRecognition:", err);
+     setVoiceStatus("idle");
+   }
+ }
+
  return (
    <div className="space-y-5">
      <div className="flex flex-col sm:flex-row gap-3">
@@ -537,12 +714,14 @@ function Controls({
          onClick={() => onSeeded("dizziness")}
          label="Dizziness check-in"
          sub="JA · dose skipped"
+         icon={<SpiralIcon className="w-14 h-14" />}
        />
        <SeededButton
          disabled={loading}
          onClick={() => onSeeded("knee")}
          label="Knee pain check-in"
          sub="JA · after gardening"
+         icon={<JointIcon className="w-14 h-14" />}
        />
      </div>
 
@@ -565,19 +744,41 @@ function Controls({
          disabled={loading}
        />
        <div className="mt-2 flex items-center gap-2">
-         {/* Input method pills — visual only, no new functionality */}
          <div className="flex gap-1.5">
-           <InputMethodPill label="Type" active />
-           <InputMethodPill label="Voice" />
-           <InputMethodPill label="Translate" />
+           <InputMethodPill
+             label="Type"
+             title="Type"
+             icon={<KeyboardIcon className="w-4 h-4" />}
+             active={voiceStatus !== "listening"}
+           />
+           <InputMethodPill
+             label={voiceStatus === "listening" ? "Listening" : "Voice"}
+             icon={<MicIcon className="w-4 h-4" />}
+             active={voiceStatus === "listening"}
+             onClick={toggleVoice}
+             disabled={!voiceSupported}
+             title={
+               !voiceSupported
+                 ? "Voice input isn't supported in this browser"
+                 : voiceStatus === "listening"
+                   ? "Click to stop listening"
+                   : "Click to dictate into the transcript"
+             }
+             indicator={
+               voiceStatus === "listening" ? (
+                 <span className="w-1.5 h-1.5 rounded-full bg-clay animate-pulse" />
+               ) : null
+             }
+           />
          </div>
          <div className="flex-1" />
          <button
            onClick={onAnalyze}
            disabled={loading || !transcript.trim()}
-           className="rounded-full bg-clay px-6 py-2 text-sm font-medium text-cream hover:bg-clay-deep disabled:bg-ink-quiet/40 disabled:cursor-not-allowed transition-colors"
+           className="rounded-full bg-clay px-6 py-2 text-sm font-medium text-white hover:bg-clay-deep disabled:bg-ink-quiet/40 disabled:cursor-not-allowed transition-colors inline-flex items-center gap-2"
          >
            {loading ? "Analyzing…" : "Analyze"}
+           <SparklesIcon className="w-4 h-4" />
          </button>
        </div>
      </div>
@@ -585,19 +786,96 @@ function Controls({
  );
 }
 
+// Minimal structural typing for the Web Speech API so we don't pull in extra
+// @types dependencies. Covers only the surface this component touches.
+interface SpeechRecognitionResultLike {
+  readonly length: number;
+  readonly [index: number]: { readonly transcript: string };
+}
+interface SpeechRecognitionEventLike {
+  readonly results: ArrayLike<SpeechRecognitionResultLike>;
+}
+interface SpeechRecognitionLike {
+  lang: string;
+  continuous: boolean;
+  interimResults: boolean;
+  start(): void;
+  stop(): void;
+  onresult: ((e: SpeechRecognitionEventLike) => void) | null;
+  onerror: ((e: { error?: string }) => void) | null;
+  onend: (() => void) | null;
+}
+type SpeechRecognitionCtor = new () => SpeechRecognitionLike;
 
-function InputMethodPill({ label, active }: { label: string; active?: boolean }) {
- return (
-   <div
-     className={`rounded-full px-3 py-1 text-xs border select-none ${
-       active
-         ? "border-clay/40 bg-clay-soft/50 text-clay-deep"
-         : "border-edge text-ink-quiet"
-     }`}
-   >
-     {label}
-   </div>
- );
+function getSpeechRecognitionCtor(): SpeechRecognitionCtor | null {
+  if (typeof window === "undefined") return null;
+  const w = window as unknown as {
+    SpeechRecognition?: SpeechRecognitionCtor;
+    webkitSpeechRecognition?: SpeechRecognitionCtor;
+  };
+  return w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null;
+}
+
+
+function InputMethodPill({
+  label,
+  active,
+  onClick,
+  disabled,
+  title,
+  indicator,
+  icon,
+}: {
+  label: string;
+  active?: boolean;
+  onClick?: () => void;
+  disabled?: boolean;
+  title?: string;
+  indicator?: React.ReactNode;
+  // When provided, the pill shows the icon and keeps `label` only as
+  // sr-only text so screen readers still announce "Type" / "Voice".
+  icon?: React.ReactNode;
+}) {
+  const base = `rounded-full px-3 py-1 text-xs border select-none transition-colors inline-flex items-center gap-1.5 ${
+    active
+      ? "border-clay/40 bg-clay-soft/60 text-clay-deep"
+      : "border-edge text-ink-quiet"
+  }`;
+  const interactive =
+    onClick && !disabled ? " hover:border-clay/40 hover:text-ink-deep cursor-pointer" : "";
+  const dim = disabled ? " opacity-50 cursor-not-allowed" : "";
+  const visual = icon ? (
+    <>
+      {indicator}
+      {icon}
+      <span className="sr-only">{label}</span>
+    </>
+  ) : (
+    <>
+      {indicator}
+      {label}
+    </>
+  );
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        disabled={disabled}
+        title={title ?? label}
+        aria-label={label}
+        aria-pressed={active}
+        className={base + interactive + dim}
+      >
+        {visual}
+      </button>
+    );
+  }
+  return (
+    <div className={base} title={title ?? label} aria-label={label} role="img">
+      {visual}
+    </div>
+  );
 }
 
 
@@ -606,22 +884,31 @@ function SeededButton({
  sub,
  onClick,
  disabled,
+ icon,
 }: {
  label: string;
  sub: string;
  onClick: () => void;
  disabled?: boolean;
+ icon?: React.ReactNode;
 }) {
  return (
    <button
      onClick={onClick}
      disabled={disabled}
-     className="flex-1 group rounded-2xl border border-edge bg-paper px-5 py-4 text-left hover:border-clay/40 hover:bg-clay-soft/30 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+     className="flex-1 group rounded-2xl border border-edge bg-paper px-5 py-4 text-left hover:border-clay/40 hover:bg-clay-soft/30 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-3"
    >
-     <div className="text-sm font-medium text-ink-deep group-hover:text-clay-deep transition-colors">
-       {label}
+     {icon && (
+       <span className="shrink-0 text-sage group-hover:text-clay/80 transition-colors">
+         {icon}
+       </span>
+     )}
+     <div className="flex-1 min-w-0">
+       <div className="text-sm font-medium text-ink-deep group-hover:text-clay-deep transition-colors">
+         {label}
+       </div>
+       <div className="mt-0.5 text-xs uppercase tracking-wider text-ink-quiet">{sub}</div>
      </div>
-     <div className="mt-0.5 text-xs uppercase tracking-wider text-ink-quiet">{sub}</div>
    </button>
  );
 }
@@ -2365,8 +2652,13 @@ function RightPanel({ result }: { result: ApiResponse }) {
        <div className="flex">
          <div className={`w-1.5 ${v.bar} shrink-0`} />
          <div className="flex-1 p-5">
-           <div className={`text-[10px] uppercase tracking-[0.22em] font-medium ${v.ink}`}>
-             {v.tag}
+           <div className="flex items-start justify-between gap-3">
+             <div className={`text-[10px] uppercase tracking-[0.22em] font-medium ${v.ink}`}>
+               {v.tag}
+             </div>
+             {decision.level === "escalate" && (
+               <PhoneIcon className="w-5 h-5 text-clay" />
+             )}
            </div>
            <h2 className={`mt-2 font-serif text-2xl leading-snug ${v.ink}`}>
              {v.phrase}
@@ -2391,42 +2683,57 @@ function RightPanel({ result }: { result: ApiResponse }) {
      </div>
 
 
-     {/* Needs clarification */}
+     {/* Needs clarification — mirrors the Recommended Follow-up card shape:
+         rounded-2xl shell + colored side bar + flex p-5 with a header row
+         (title left, icon top-right) and content below. */}
      {checkIn.ambiguity.length > 0 && (
-       <div>
-         <div className="text-[11px] uppercase tracking-[0.2em] text-ink-quiet font-medium mb-3">
-           Needs clarification
-         </div>
-         <div className="space-y-3">
-           {checkIn.ambiguity.map((a, i) => (
-             <div
-               key={i}
-               className="rounded-xl bg-amber-bg/60 border border-amber-warm/25 p-4"
-             >
-               <div className="font-serif text-lg text-amber-deep" lang={checkIn.language}>
-                 &ldquo;{a.phrase}&rdquo;
+       <div className="rounded-2xl bg-amber-bg/60 ring-1 ring-amber-warm/25 overflow-hidden">
+         <div className="flex">
+           <div className="w-1.5 bg-amber-warm shrink-0" />
+           <div className="flex-1 p-5">
+             <div className="flex items-start justify-between gap-3">
+               <div className="text-[10px] uppercase tracking-[0.22em] font-medium text-amber-deep">
+                 Needs clarification
                </div>
-               <div className="mt-2.5">
-                 <div className="text-[10px] uppercase tracking-widest text-amber-warm">
-                   Could mean
-                 </div>
-                 <ul className="mt-1 text-ink-soft text-xs space-y-0.5">
-                   {a.couldMean.map((c, j) => (
-                     <li key={j}>
-                       <span className="mr-1.5 text-amber-warm/60">·</span>
-                       {c}
-                     </li>
-                   ))}
-                 </ul>
-               </div>
-               <div className="mt-3 pt-3 border-t border-amber-warm/20">
-                 <div className="text-[10px] uppercase tracking-widest text-amber-warm mb-1">
-                   Ask her
-                 </div>
-                 <p className="text-ink-deep text-sm leading-relaxed">{a.followUp}</p>
-               </div>
+               <LightbulbIcon className="w-5 h-5 text-amber-warm" />
              </div>
-           ))}
+             <div className="mt-4 space-y-4">
+               {checkIn.ambiguity.map((a, i) => (
+                 <div
+                   key={i}
+                   className={i > 0 ? "pt-4 border-t border-amber-warm/20" : ""}
+                 >
+                   <div
+                     className="font-serif text-lg text-amber-deep"
+                     lang={checkIn.language}
+                   >
+                     &ldquo;{a.phrase}&rdquo;
+                   </div>
+                   <div className="mt-2.5">
+                     <div className="text-[10px] uppercase tracking-widest text-amber-warm">
+                       Could mean
+                     </div>
+                     <ul className="mt-1 text-ink-soft text-xs space-y-0.5">
+                       {a.couldMean.map((c, j) => (
+                         <li key={j}>
+                           <span className="mr-1.5 text-amber-warm/60">·</span>
+                           {c}
+                         </li>
+                       ))}
+                     </ul>
+                   </div>
+                   <div className="mt-3 pt-3 border-t border-amber-warm/20">
+                     <div className="text-[10px] uppercase tracking-widest text-amber-warm mb-1">
+                       Ask her
+                     </div>
+                     <p className="text-ink-deep text-sm leading-relaxed">
+                       {a.followUp}
+                     </p>
+                   </div>
+                 </div>
+               ))}
+             </div>
+           </div>
          </div>
        </div>
      )}
