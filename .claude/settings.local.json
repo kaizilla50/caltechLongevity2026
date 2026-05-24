@@ -24,7 +24,22 @@
       "Bash(curl -s -o NUL -w \"HTTP %{http_code}\\\\n\" --max-time 5 http://localhost:3000/)",
       "Bash(node -e ' *)",
       "Bash(npm test *)",
-      "Bash(npx vitest *)"
+      "Bash(npx vitest *)",
+      "Bash(taskkill /PID 24988 /F)",
+      "Bash(netstat -ano)",
+      "Bash(cmd //c \"taskkill /PID 24988 /F\")",
+      "Bash(curl -s -o NUL -w \"HTTP %{http_code}\\\\n\" --max-time 5 http://localhost:3001/)",
+      "Bash(curl -s -X POST http://localhost:3000/api/checkin -H 'Content-Type: application/json' --data '{\"transcript\":\"今朝、ちょっと頭が痛いですが、薬は飲みました。\",\"language\":\"ja\"}' -w '\\\\nHTTP %{http_code} | time: %{time_total}s\\\\n')",
+      "Bash(curl -s -o NUL -w \"HTTPS to api.anthropic.com: %{http_code} | time: %{time_total}s\\\\n\" --max-time 10 https://api.anthropic.com/)",
+      "Bash(curl -sv --max-time 10 https://api.anthropic.com/)",
+      "Bash(curl -s -o NUL -w \"github.com: %{http_code}\\\\n\" --max-time 10 https://github.com/)",
+      "Bash(curl -s -o NUL -w \"example.com: %{http_code}\\\\n\" --max-time 10 https://example.com/)",
+      "Bash(NODE_USE_SYSTEM_CA=1 node -e ' *)",
+      "Bash(node --use-system-ca -e ' *)",
+      "Bash(cmd //c \"taskkill /PID 7012 /F\")",
+      "Bash(NODE_OPTIONS=--use-system-ca npm run dev)",
+      "Bash(curl -s -X POST http://localhost:3000/api/checkin -H 'Content-Type: application/json' --data '{\"transcript\":\"今朝、ちょっと頭が痛いですが、薬は飲みました。\",\"language\":\"ja\"}' -w '\\\\nHTTP %{http_code} | time: %{time_total}s\\\\n' --max-time 60)",
+      "Bash(curl -s -X POST http://localhost:3000/api/checkin -H 'Content-Type: application/json; charset=utf-8' --data-binary @_payload.json --max-time 60)"
     ]
   }
 }
