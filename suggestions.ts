@@ -63,11 +63,15 @@ function ruleMedStartedRecently(
     best.days === 0
       ? "today"
       : `${best.days} day${best.days === 1 ? "" : "s"} ago`;
+  const prefill =
+    best.days === 0
+      ? `Mom just started ${best.name} this morning and says she feels fine so far.`
+      : `Mom's been on ${best.name} for ${best.days} day${best.days === 1 ? "" : "s"} now and says it's been okay so far.`;
   return {
     id: `sug-med-${best.id}`,
     source: "medStartedRecently",
     text: `Mom started ${best.name} ${ago} — is it helping, hurting, or about the same?`,
-    prefill: `Following up on ${best.name} (day ${best.days}): `,
+    prefill,
   };
 }
 
@@ -92,7 +96,7 @@ function ruleRecentSymptom(
       id: `sug-sym-${ci.id}`,
       source: "recentSymptom",
       text: `She mentioned ${sym} ${when} — is she still feeling it?`,
-      prefill: `Following up on the ${sym}: `,
+      prefill: `Mom says the ${sym} is still bothering her today.`,
     };
   }
   return null;
@@ -122,7 +126,7 @@ function ruleUpcomingAppointment(
     id: `sug-appt-${best.id}`,
     source: "upcomingAppointment",
     text: `Her ${lcFirst(best.role)} visit with ${best.doctorName} is ${inN} — want to note what to raise?`,
-    prefill: `Notes for ${lcFirst(best.role)} with ${best.doctorName}: `,
+    prefill: `Mom has a ${lcFirst(best.role)} with ${best.doctorName} coming up — she's been doing well overall.`,
   };
 }
 
@@ -144,13 +148,29 @@ function ruleOlderRecommendation(
   if (!best) return null;
   const weeks = Math.round(best.days / 7);
   const head = firstClause(best.text);
+  const prefill =
+    RECOMMENDATION_PREFILLS[best.goal] ??
+    `Mom says her ${best.goal} has been better lately.`;
   return {
     id: `sug-rec-${best.id}`,
     source: "olderRecommendation",
     text: `${weeks} weeks ago you tried "${head}" for ${best.goal} — has it helped?`,
-    prefill: `Checking in on the ${best.goal} suggestion: `,
+    prefill,
   };
 }
+
+// Hand-crafted observation lines per recommendation goal. Each reads like
+// something a caregiver would naturally type — no "checking in on the X
+// suggestion" meta-phrasing that the LLM extractor would treat as the
+// patient's own words. Falls back to a generic line for unknown goals.
+const RECOMMENDATION_PREFILLS: Record<string, string> = {
+  energy:
+    "Mom says her energy has been better in the afternoons since adding the protein snack.",
+  mobility:
+    "Mom says her back has felt less stiff since we started the daily stretches.",
+  cholesterol:
+    "Mom's been good about skipping grapefruit since she started Atorvastatin.",
+};
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers

@@ -1,7 +1,7 @@
 "use client";
 
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type {
  Baseline,
  CaregiverBrief,
@@ -303,6 +303,27 @@ export default function Dashboard() {
  // once per profile change. Surfaces 3–4 prompts above the check-in controls.
  const suggestions = useMemo(() => generateSuggestions(profile), [profile]);
 
+ // Ref the textarea so clicking a suggestion can focus + scroll the caregiver
+ // straight to the prefilled note for editing.
+ const transcriptRef = useRef<HTMLTextAreaElement>(null);
+
+ function pickSuggestion(s: Suggestion) {
+   setTranscript(s.prefill);
+   // Defer to the next frame so React has committed the new value before we
+   // move the caret to the end and scroll the textarea into view.
+   requestAnimationFrame(() => {
+     const el = transcriptRef.current;
+     if (!el) return;
+     el.focus();
+     try {
+       el.setSelectionRange(s.prefill.length, s.prefill.length);
+     } catch {
+       // setSelectionRange can throw on detached elements — safe to ignore.
+     }
+     el.scrollIntoView({ behavior: "smooth", block: "center" });
+   });
+ }
+
 
  return (
    <div className="h-screen bg-cream flex overflow-hidden">
@@ -335,7 +356,7 @@ export default function Dashboard() {
                  <div className="mt-8 print:hidden">
                    <SuggestionsCard
                      suggestions={suggestions}
-                     onPick={(s) => setTranscript(s.prefill)}
+                     onPick={pickSuggestion}
                    />
                  </div>
                )}
@@ -348,6 +369,7 @@ export default function Dashboard() {
                    loading={loading}
                    onSeeded={runSeeded}
                    onAnalyze={() => analyze(transcript)}
+                   textareaRef={transcriptRef}
                  />
                </div>
 
@@ -460,12 +482,14 @@ function Controls({
  loading,
  onSeeded,
  onAnalyze,
+ textareaRef,
 }: {
  transcript: string;
  setTranscript: (s: string) => void;
  loading: boolean;
  onSeeded: (id: ScenarioId) => void;
  onAnalyze: () => void;
+ textareaRef?: React.Ref<HTMLTextAreaElement>;
 }) {
  return (
    <div className="space-y-5">
@@ -494,6 +518,7 @@ function Controls({
 
      <div>
        <textarea
+         ref={textareaRef}
          value={transcript}
          onChange={(e) => setTranscript(e.target.value)}
          placeholder="Describe how Mom feels today — any language."
