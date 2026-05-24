@@ -12,6 +12,7 @@ import { decide } from "@/rules";
 import baselineJson from "@/baseline.json";
 import demoCacheJson from "@/demo-cache.json";
 import { useProfile } from "@/profile-context";
+import type { Medication } from "@/profile";
 
 
 type ApiResponse = {
@@ -115,7 +116,7 @@ const NAV_ITEMS: { id: NavItemId; label: string; clickable: boolean }[] = [
  { id: "checkin", label: "Check-in", clickable: true },
  { id: "history", label: "History", clickable: true },
  { id: "trends", label: "Trends", clickable: false },
- { id: "medications", label: "Medications", clickable: false },
+ { id: "medications", label: "Medications", clickable: true },
  { id: "careteam", label: "Care Team", clickable: false },
  { id: "settings", label: "Settings", clickable: false },
 ];
@@ -353,6 +354,8 @@ export default function Dashboard() {
 
 
            {activeView === "history" && <HistoryView />}
+
+           {activeView === "medications" && <MedicationsView />}
          </div>
        </main>
 
@@ -976,6 +979,109 @@ function prettyDate(iso: string): string {
   return `${MONTH_NAMES[d.getUTCMonth()]} ${d.getUTCDate()}, ${d.getUTCFullYear()}`;
 }
 
+
+// Medications view — read-only cards for the regimen, sorted newest-started
+// first so the recent additions (Amlodipine + Lisinopril) lead. Reads
+// medications straight from useProfile(); no mutations yet.
+function MedicationsView() {
+  const { profile } = useProfile();
+  const meds = useMemo(
+    () =>
+      [...profile.medications].sort((a, b) =>
+        b.startedOn.localeCompare(a.startedOn),
+      ),
+    [profile.medications],
+  );
+
+  return (
+    <>
+      <div className="text-sm text-ink-quiet mb-1">Medications</div>
+      <h1 className="font-serif text-3xl md:text-4xl leading-tight text-ink-deep">
+        Mom&rsquo;s regimen.
+      </h1>
+      <p className="mt-2 text-ink-soft text-sm md:text-base leading-relaxed max-w-xl">
+        {meds.length} active medications, newest started first.
+      </p>
+
+      <div className="mt-8 space-y-5">
+        {meds.map((med) => (
+          <MedicationCard key={med.id} med={med} />
+        ))}
+      </div>
+    </>
+  );
+}
+
+function MedicationCard({ med }: { med: Medication }) {
+  return (
+    <article className="rounded-2xl border border-edge bg-paper p-6 md:p-7 space-y-5">
+      <div className="flex items-start justify-between gap-4">
+        <h2 className="font-serif text-xl md:text-2xl leading-snug text-ink-deep">
+          {med.name}{" "}
+          <span className="text-ink-soft font-normal">{med.dose}</span>
+        </h2>
+        {med.withFood && (
+          <span className="shrink-0 text-[10px] uppercase tracking-widest text-sage bg-sage-soft border border-sage/30 px-2.5 py-1 rounded-full font-medium">
+            With food
+          </span>
+        )}
+      </div>
+
+      <div>
+        <div className="text-xs uppercase tracking-widest text-ink-quiet mb-1.5">
+          Schedule
+        </div>
+        <p className="text-ink-soft leading-relaxed text-sm">{med.schedule}</p>
+      </div>
+
+      <div>
+        <div className="text-xs uppercase tracking-widest text-ink-quiet mb-1.5">
+          Directions
+        </div>
+        <p className="text-ink-soft leading-relaxed text-sm">{med.directions}</p>
+      </div>
+
+      {med.commonSideEffects.length > 0 && (
+        <div>
+          <div className="text-xs uppercase tracking-widest text-ink-quiet mb-2">
+            Common side effects
+          </div>
+          <ul className="flex flex-wrap gap-1.5">
+            {med.commonSideEffects.map((s, i) => (
+              <li
+                key={i}
+                className="text-xs text-ink-soft bg-edge/40 px-2.5 py-1 rounded-full"
+              >
+                {s}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      <div className="pt-4 border-t border-edge text-xs text-ink-quiet">
+        Started {prettyDate(med.startedOn)}{" "}
+        <span className="text-ink-quiet/70">· {relativeAge(med.startedOn)}</span>
+      </div>
+    </article>
+  );
+}
+
+// Relative-age phrasing for the "started …" line. Coarse on purpose — users
+// want "6 months ago", not "183 days ago".
+function relativeAge(startedOn: string): string {
+  const start = new Date(`${startedOn}T00:00:00Z`).getTime();
+  const days = Math.max(0, Math.floor((Date.now() - start) / 86_400_000));
+  if (days === 0) return "today";
+  if (days === 1) return "yesterday";
+  if (days < 60) return `${days} days ago`;
+  if (days < 730) {
+    const months = Math.round(days / 30);
+    return `${months} month${months === 1 ? "" : "s"} ago`;
+  }
+  const years = Math.floor(days / 365);
+  return `${years} year${years === 1 ? "" : "s"} ago`;
+}
 
 // Right insight panel: verdict card + needs clarification
 function RightPanel({ result }: { result: ApiResponse }) {
