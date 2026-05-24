@@ -13,6 +13,7 @@ import baselineJson from "@/baseline.json";
 import demoCacheJson from "@/demo-cache.json";
 import { useProfile } from "@/profile-context";
 import type { Appointment, CareTeamMember, Medication } from "@/profile";
+import { generateSuggestions, type Suggestion } from "@/suggestions";
 
 
 type ApiResponse = {
@@ -200,19 +201,36 @@ function LeftSidebar({
      </div>
 
 
-     {/* Language selector — non-interactive placeholders (i18n not yet wired) */}
-     <div className="px-4 pb-5 pt-3 border-t border-edge">
-       <div className="text-[10px] uppercase tracking-widest text-ink-quiet mb-2">Language</div>
-       <div className="flex gap-1.5">
-         <div className="flex-1 text-xs py-1.5 rounded-lg bg-clay text-cream font-medium text-center select-none">
-           EN
-         </div>
-         <div className="flex-1 text-xs py-1.5 rounded-lg border border-edge text-ink-quiet text-center select-none">
-           日本語
-         </div>
-       </div>
-     </div>
+     {/* Language toggle — visual only for now; selection is local sidebar state */}
+     <LanguageToggle />
    </aside>
+ );
+}
+
+function LanguageToggle() {
+ const [lang, setLang] = useState<"en" | "ja">("en");
+ const pill = (id: "en" | "ja", label: string) => (
+   <button
+     type="button"
+     onClick={() => setLang(id)}
+     aria-pressed={lang === id}
+     className={`flex-1 text-xs py-1.5 rounded-lg text-center transition-colors ${
+       lang === id
+         ? "bg-clay text-cream font-medium"
+         : "border border-edge text-ink-quiet hover:border-clay/40 hover:text-ink-soft"
+     }`}
+   >
+     {label}
+   </button>
+ );
+ return (
+   <div className="px-4 pb-5 pt-3 border-t border-edge">
+     <div className="text-[10px] uppercase tracking-widest text-ink-quiet mb-2">Language</div>
+     <div className="flex gap-1.5">
+       {pill("en", "EN")}
+       {pill("ja", "日本語")}
+     </div>
+   </div>
  );
 }
 
@@ -281,6 +299,10 @@ export default function Dashboard() {
  const showRightPanel =
    activeView === "checkin" && !loading && !error && !!result;
 
+ // Deterministic rules over useProfile() data — no LLM, no API call. Runs
+ // once per profile change. Surfaces 3–4 prompts above the check-in controls.
+ const suggestions = useMemo(() => generateSuggestions(profile), [profile]);
+
 
  return (
    <div className="h-screen bg-cream flex overflow-hidden">
@@ -308,8 +330,18 @@ export default function Dashboard() {
                </p>
 
 
+               {/* Suggestions — deterministic rules over the profile; click prefills */}
+               {suggestions.length > 0 && (
+                 <div className="mt-8 print:hidden">
+                   <SuggestionsCard
+                     suggestions={suggestions}
+                     onPick={(s) => setTranscript(s.prefill)}
+                   />
+                 </div>
+               )}
+
                {/* Controls */}
-               <div className="mt-8 print:hidden">
+               <div className="mt-6 print:hidden">
                  <Controls
                    transcript={transcript}
                    setTranscript={setTranscript}
@@ -375,6 +407,35 @@ export default function Dashboard() {
  );
 }
 
+
+function SuggestionsCard({
+  suggestions,
+  onPick,
+}: {
+  suggestions: Suggestion[];
+  onPick: (s: Suggestion) => void;
+}) {
+  return (
+    <div>
+      <div className="text-xs uppercase tracking-[0.22em] text-clay font-medium mb-3">
+        Today, you might check on…
+      </div>
+      <div className="space-y-2">
+        {suggestions.map((s) => (
+          <button
+            key={s.id}
+            type="button"
+            onClick={() => onPick(s)}
+            title={`Click to prefill the transcript — source: ${s.source}`}
+            className="w-full text-left rounded-xl border border-sage/25 bg-sage-soft/50 hover:bg-sage-soft hover:border-sage/50 px-4 py-3 text-sm text-ink-deep leading-relaxed transition-colors"
+          >
+            {s.text}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 function PrivacyBanner() {
  return (
