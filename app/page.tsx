@@ -974,7 +974,7 @@ function summarize(checkIn: CheckIn): string {
     return checkIn.extracted.symptoms[0].term;
   }
   if (checkIn.extracted.medicationTaken === "no") return "skipped";
-  return "ok";
+  return "normal";
 }
 
 function summarizeMonth(
