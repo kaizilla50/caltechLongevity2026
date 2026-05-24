@@ -20,7 +20,9 @@
       "Bash(curl -s http://localhost:3000/)",
       "Bash(node -e \"const h = require\\('fs'\\).readFileSync\\('C:\\\\\\\\\\\\\\\\Users\\\\\\\\\\\\\\\\kaiol\\\\\\\\\\\\\\\\AppData\\\\\\\\\\\\\\\\Local\\\\\\\\\\\\\\\\Temp\\\\\\\\\\\\\\\\throughline_home.html','utf8'\\); const tests = [['Greeting present','Good morning, Angel'],['Patient heading','check-in with Mom'],['Dizziness button','Dizziness check-in'],['Knee button','Knee pain check-in'],['Sidebar logo','Throughline'],['Trend strip header','Past 5 days']]; for \\(const [name,needle] of tests\\) console.log\\(\\(h.includes\\(needle\\)?'  OK   ':'MISSING '\\)+name+'  :  '+JSON.stringify\\(needle\\)\\);\")",
       "Bash(node -e \"const h = require\\('fs'\\).readFileSync\\('_home.html','utf8'\\); const tests = [['Greeting present','Good morning, Angel'],['Patient heading','check-in with Mom'],['Dizziness button','Dizziness check-in'],['Knee button','Knee pain check-in'],['Sidebar logo','Throughline'],['Past 5 days strip','Past 5 days']]; for \\(const [name,needle] of tests\\) console.log\\(\\(h.includes\\(needle\\)?'  OK   ':'MISSING '\\)+name+'  :  '+JSON.stringify\\(needle\\)\\);\")",
-      "Bash(node -e \"const h = require\\('fs'\\).readFileSync\\('_home.html','utf8'\\); for \\(const needle of ['Good morning','Angel','Past','days','Mom']\\) { const idx = h.indexOf\\(needle\\); console.log\\(needle, '=>', idx, idx>=0? JSON.stringify\\(h.slice\\(Math.max\\(0,idx-30\\), idx+60\\)\\) : ''\\); }\")"
+      "Bash(node -e \"const h = require\\('fs'\\).readFileSync\\('_home.html','utf8'\\); for \\(const needle of ['Good morning','Angel','Past','days','Mom']\\) { const idx = h.indexOf\\(needle\\); console.log\\(needle, '=>', idx, idx>=0? JSON.stringify\\(h.slice\\(Math.max\\(0,idx-30\\), idx+60\\)\\) : ''\\); }\")",
+      "Bash(curl -s -o NUL -w \"HTTP %{http_code}\\\\n\" --max-time 5 http://localhost:3000/)",
+      "Bash(node -e ' *)"
     ]
   }
 }

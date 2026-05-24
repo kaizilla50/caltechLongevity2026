@@ -1,7 +1,7 @@
 "use client";
 
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type {
  Baseline,
  CaregiverBrief,
@@ -111,17 +111,23 @@ const NAV_ICONS: Record<NavItemId, string> = {
 };
 
 
-const NAV_ITEMS: { id: NavItemId; label: string; active?: boolean }[] = [
- { id: "checkin", label: "Check-in", active: true },
- { id: "history", label: "History" },
- { id: "trends", label: "Trends" },
- { id: "medications", label: "Medications" },
- { id: "careteam", label: "Care Team" },
- { id: "settings", label: "Settings" },
+const NAV_ITEMS: { id: NavItemId; label: string; clickable: boolean }[] = [
+ { id: "checkin", label: "Check-in", clickable: true },
+ { id: "history", label: "History", clickable: true },
+ { id: "trends", label: "Trends", clickable: false },
+ { id: "medications", label: "Medications", clickable: false },
+ { id: "careteam", label: "Care Team", clickable: false },
+ { id: "settings", label: "Settings", clickable: false },
 ];
 
 
-function LeftSidebar() {
+function LeftSidebar({
+ activeView,
+ onSelectView,
+}: {
+ activeView: NavItemId;
+ onSelectView: (id: NavItemId) => void;
+}) {
  return (
    <aside className="hidden md:flex w-56 shrink-0 h-full flex-col border-r border-edge bg-paper/70 print:hidden">
      {/* Logo */}
@@ -140,22 +146,43 @@ function LeftSidebar() {
 
      {/* Nav */}
      <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
-       {NAV_ITEMS.map((item) => (
-         <button
-           key={item.id}
-           className={`w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors text-left ${
-             item.active
-               ? "bg-clay-soft/80 text-clay-deep font-medium"
-               : "text-ink-soft hover:bg-edge/60 hover:text-ink-deep"
-           }`}
-         >
-           <Icon
-             d={NAV_ICONS[item.id]}
-             className={item.active ? "text-clay" : "text-ink-quiet"}
-           />
-           {item.label}
-         </button>
-       ))}
+       {NAV_ITEMS.map((item) => {
+         const isActive = activeView === item.id;
+         const base =
+           "w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors text-left";
+         const state = isActive
+           ? "bg-clay-soft/80 text-clay-deep font-medium"
+           : item.clickable
+             ? "text-ink-soft hover:bg-edge/60 hover:text-ink-deep"
+             : "text-ink-quiet/70 cursor-not-allowed";
+         return (
+           <button
+             key={item.id}
+             type="button"
+             onClick={item.clickable ? () => onSelectView(item.id) : undefined}
+             disabled={!item.clickable}
+             aria-current={isActive ? "page" : undefined}
+             className={`${base} ${state}`}
+           >
+             <Icon
+               d={NAV_ICONS[item.id]}
+               className={
+                 isActive
+                   ? "text-clay"
+                   : item.clickable
+                     ? "text-ink-quiet"
+                     : "text-ink-quiet/50"
+               }
+             />
+             <span className="flex-1">{item.label}</span>
+             {!item.clickable && (
+               <span className="text-[9px] uppercase tracking-widest text-ink-quiet/80 bg-edge/60 px-1.5 py-0.5 rounded">
+                 Soon
+               </span>
+             )}
+           </button>
+         );
+       })}
      </nav>
 
 
@@ -172,16 +199,16 @@ function LeftSidebar() {
      </div>
 
 
-     {/* Language selector */}
+     {/* Language selector — non-interactive placeholders (i18n not yet wired) */}
      <div className="px-4 pb-5 pt-3 border-t border-edge">
        <div className="text-[10px] uppercase tracking-widest text-ink-quiet mb-2">Language</div>
        <div className="flex gap-1.5">
-         <button className="flex-1 text-xs py-1.5 rounded-lg bg-clay text-cream font-medium transition-colors">
+         <div className="flex-1 text-xs py-1.5 rounded-lg bg-clay text-cream font-medium text-center select-none">
            EN
-         </button>
-         <button className="flex-1 text-xs py-1.5 rounded-lg border border-edge text-ink-quiet hover:border-clay/30 hover:text-ink-soft transition-colors">
+         </div>
+         <div className="flex-1 text-xs py-1.5 rounded-lg border border-edge text-ink-quiet text-center select-none">
            日本語
-         </button>
+         </div>
        </div>
      </div>
    </aside>
@@ -191,6 +218,7 @@ function LeftSidebar() {
 
 export default function Dashboard() {
  const { profile } = useProfile();
+ const [activeView, setActiveView] = useState<NavItemId>("checkin");
  const [transcript, setTranscript] = useState("");
  const [loading, setLoading] = useState(false);
  const [result, setResult] = useState<ApiResponse | null>(null);
@@ -249,80 +277,91 @@ export default function Dashboard() {
  }
 
 
+ const showRightPanel =
+   activeView === "checkin" && !loading && !error && !!result;
+
+
  return (
    <div className="h-screen bg-cream flex overflow-hidden">
-     <LeftSidebar />
+     <LeftSidebar activeView={activeView} onSelectView={setActiveView} />
 
 
      <div className="flex-1 flex min-w-0 overflow-hidden">
        {/* Main workspace */}
        <main className="flex-1 overflow-y-auto min-w-0">
          <div className="max-w-2xl mx-auto px-6 py-10">
-           {/* Greeting */}
-           <div className="text-sm text-ink-quiet mb-1">
-             {greeting}, {profile.caregiverName}
-           </div>
+           {activeView === "checkin" && (
+             <>
+               {/* Greeting */}
+               <div className="text-sm text-ink-quiet mb-1">
+                 {greeting}, {profile.caregiverName}
+               </div>
 
 
-           {/* Main heading */}
-           <h1 className="font-serif text-3xl md:text-4xl leading-tight text-ink-deep">
-             Today&rsquo;s check-in with Mom.
-           </h1>
-           <p className="mt-2 text-ink-soft text-sm md:text-base leading-relaxed max-w-xl">
-             A multilingual bridge between you and her day &mdash; in her own words, and in English.
-           </p>
+               {/* Main heading */}
+               <h1 className="font-serif text-3xl md:text-4xl leading-tight text-ink-deep">
+                 Today&rsquo;s check-in with Mom.
+               </h1>
+               <p className="mt-2 text-ink-soft text-sm md:text-base leading-relaxed max-w-xl">
+                 A multilingual bridge between you and her day &mdash; in her own words, and in English.
+               </p>
 
 
-           {/* Controls */}
-           <div className="mt-8 print:hidden">
-             <Controls
-               transcript={transcript}
-               setTranscript={setTranscript}
-               loading={loading}
-               onSeeded={runSeeded}
-               onAnalyze={() => analyze(transcript)}
-             />
-           </div>
+               {/* Controls */}
+               <div className="mt-8 print:hidden">
+                 <Controls
+                   transcript={transcript}
+                   setTranscript={setTranscript}
+                   loading={loading}
+                   onSeeded={runSeeded}
+                   onAnalyze={() => analyze(transcript)}
+                 />
+               </div>
 
 
-           {/* Privacy banner */}
-           <PrivacyBanner />
+               {/* Privacy banner */}
+               <PrivacyBanner />
 
 
-           {/* Trend strip */}
-           {baseline.recentCheckIns.length > 0 && (
-             <TrendStrip history={baseline.recentCheckIns} todayResult={result} />
+               {/* Trend strip */}
+               {baseline.recentCheckIns.length > 0 && (
+                 <TrendStrip history={baseline.recentCheckIns} todayResult={result} />
+               )}
+
+
+               {/* Result main content */}
+               <section className="mt-8">
+                 {loading && (
+                   <div className="print:hidden">
+                     <LoadingCard />
+                   </div>
+                 )}
+                 {!loading && error && (
+                   <div className="print:hidden">
+                     <ErrorCard message={error} />
+                   </div>
+                 )}
+                 {!loading && !error && result && <MainResultContent result={result} />}
+                 {!loading && !error && !result && (
+                   <div className="print:hidden">
+                     <EmptyHint />
+                   </div>
+                 )}
+               </section>
+             </>
            )}
 
 
-           {/* Result main content */}
-           <section className="mt-8">
-             {loading && (
-               <div className="print:hidden">
-                 <LoadingCard />
-               </div>
-             )}
-             {!loading && error && (
-               <div className="print:hidden">
-                 <ErrorCard message={error} />
-               </div>
-             )}
-             {!loading && !error && result && <MainResultContent result={result} />}
-             {!loading && !error && !result && (
-               <div className="print:hidden">
-                 <EmptyHint />
-               </div>
-             )}
-           </section>
+           {activeView === "history" && <HistoryView />}
          </div>
        </main>
 
 
        {/* Right insight panel — slides in when results are present */}
-       {!loading && !error && result && (
+       {showRightPanel && (
          <aside className="w-[300px] xl:w-[340px] shrink-0 h-full overflow-y-auto border-l border-edge bg-paper/60 print:hidden">
            <div className="p-6">
-             <RightPanel result={result} />
+             <RightPanel result={result!} />
            </div>
          </aside>
        )}
@@ -543,6 +582,102 @@ function MainResultContent({ result }: { result: ApiResponse }) {
      </div>
    </article>
  );
+}
+
+
+// History view — reverse-chronological list of every past check-in. Verdict
+// dot per row uses the same decide() rules engine the live check-in uses; the
+// rules engine is the single source of truth for level coloring.
+function HistoryView() {
+ const { profile } = useProfile();
+ const rows = useMemo(
+   () =>
+     [...profile.checkInHistory].reverse().map((ci) => ({
+       ci,
+       level: decide(ci, baseline).level,
+     })),
+   [profile.checkInHistory],
+ );
+
+
+ return (
+   <>
+     <div className="text-sm text-ink-quiet mb-1">History</div>
+     <h1 className="font-serif text-3xl md:text-4xl leading-tight text-ink-deep">
+       Mom&rsquo;s past check-ins.
+     </h1>
+     <p className="mt-2 text-ink-soft text-sm md:text-base leading-relaxed max-w-xl">
+       {rows.length} days, newest first. The verdict dot reflects the rules engine.
+     </p>
+
+
+     <div className="mt-8 -mx-3">
+       {rows.map(({ ci, level }) => (
+         <HistoryRow key={ci.id} checkIn={ci} level={level} />
+       ))}
+     </div>
+   </>
+ );
+}
+
+
+function HistoryRow({
+ checkIn,
+ level,
+}: {
+ checkIn: CheckIn;
+ level: EscalationDecision["level"];
+}) {
+ const escalate = level === "escalate";
+ const symptoms = checkIn.extracted.symptoms;
+ const summary =
+   symptoms.length > 0
+     ? symptoms
+         .map((s) => (s.isNew ? `${s.term} (new)` : s.term))
+         .join(", ")
+     : truncate(checkIn.translatedTranscript, 90);
+
+
+ return (
+   <div
+     className={`flex items-start gap-4 px-3 py-3 border-b border-edge/60 ${
+       escalate ? "bg-clay-soft/40" : ""
+     }`}
+   >
+     <div className="pt-1.5">
+       <Dot level={level} />
+     </div>
+     <div className="w-24 shrink-0 text-xs text-ink-quiet tabular-nums pt-0.5">
+       {longDate(checkIn.timestamp)}
+     </div>
+     <div className="flex-1 min-w-0">
+       <div
+         className={`text-sm leading-relaxed ${
+           escalate ? "text-clay-deep font-medium" : "text-ink-soft"
+         }`}
+       >
+         {summary}
+       </div>
+       <div className="text-[11px] text-ink-quiet mt-0.5">
+         {checkIn.medContext.name} &middot; day {checkIn.medContext.dayOfChange}
+       </div>
+     </div>
+   </div>
+ );
+}
+
+
+function truncate(s: string, n: number): string {
+ return s.length <= n ? s : s.slice(0, n - 1) + "…";
+}
+
+
+function longDate(iso: string): string {
+ const d = new Date(iso);
+ const y = d.getUTCFullYear();
+ const m = String(d.getUTCMonth() + 1).padStart(2, "0");
+ const day = String(d.getUTCDate()).padStart(2, "0");
+ return `${y}-${m}-${day}`;
 }
 
 
