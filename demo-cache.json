@@ -1,135 +1,206 @@
 {
-    "dizziness":  {
-                      "checkIn":  {
-                                      "id":  "1551d8c4-e5ff-4f72-85d7-684f7e7f8019",
-                                      "timestamp":  "2026-05-23T06:32:12.406Z",
-                                      "medContext":  {
-                                                         "name":  "Amlodipine 5mg",
-                                                         "dayOfChange":  5
-                                                     },
-                                      "language":  "ja",
-                                      "rawTranscript":  "今朝は薬を飲み忘れて、ちょっとふらふらします。",
-                                      "translatedTranscript":  "This morning I forgot to take my medication, and I feel a bit furafu ra (dizzy/lightheaded/unsteady).",
-                                      "extracted":  {
-                                                        "medicationTaken":  "no",
-                                                        "perceivedEffect":  "worse",
-                                                        "symptoms":  [
-                                                                         {
-                                                                             "term":  "dizziness/lightheadedness/unsteadiness",
-                                                                             "isNew":  true
-                                                                         }
-                                                                     ],
-                                                        "comprehensionFlag":  false
-                                                    },
-                                      "ambiguity":  [
-                                                        {
-                                                            "phrase":  "ふらふらします",
-                                                            "couldMean":  [
-                                                                              "dizzy (sensation of spinning)",
-                                                                              "lightheaded (feeling faint or woozy)",
-                                                                              "physically unsteady or weak on the feet",
-                                                                              "general malaise or wooziness without a specific directional component"
-                                                                          ],
-                                                            "followUp":  "You mentioned feeling \u0027furafu ra\u0027 — could you describe it a bit more? For example, does the room seem to spin around you, do you feel like you might faint or black out, or do you feel unsteady on your feet as if you might lose your balance?"
-                                                        }
-                                                    ]
-                                  },
-                      "decision":  {
-                                       "level":  "escalate",
-                                       "reasons":  [
-                                                       "New symptom(s) within 14 days of starting Amlodipine 5mg (day 5): dizziness/lightheadedness/unsteadiness",
-                                                       "Missed dose alongside new symptom(s): dizziness/lightheadedness/unsteadiness"
-                                                   ],
-                                       "triggeredRules":  [
-                                                              "newSymptomAfterMedChange",
-                                                              "missedDosePlusNewSymptom"
-                                                          ],
-                                       "redFlags":  [
-
-                                                    ]
-                                   },
-                      "brief":  {
-                                    "headline":  "Your mother felt dizzy and missed her blood pressure medication this morning — her doctor\u0027s office needs to hear from you today.",
-                                    "whatChanged":  "Your mother did not take her Amlodipine this morning and is describing a feeling of dizziness or unsteadiness that is new for her — it is not something she typically experiences and is not part of her usual day-to-day aches and pains.",
-                                    "whyItMatters":  "Dizziness or unsteadiness appearing just five days into a new blood pressure medication, especially on a morning when a dose was missed, is something her doctor needs to know about promptly — it could affect how safely she moves around the house and whether her current treatment plan needs any adjustment.",
-                                    "suggestedAction":  "Call her prescribing doctor\u0027s office today — before her next scheduled dose — and let them know she missed this morning\u0027s Amlodipine on day five of starting it and is feeling dizzy or unsteady, so they can advise you on what to do next.",
-                                    "questionsForDoctor":  [
-                                                               "Should she take today\u0027s missed dose now, wait until her next scheduled time, or skip it entirely — and what is the safest approach given how she is feeling right now?",
-                                                               "Could the dizziness or unsteadiness she is describing be connected to starting Amlodipine five days ago, and is this something you would expect to settle on its own?",
-                                                               "Are there specific warning signs — such as a fall, fainting, or the dizziness getting worse — that should prompt us to call back or go to urgent care right away?",
-                                                               "Is there anything she should avoid doing today, like driving or climbing stairs, while she is feeling unsteady?",
-                                                               "Should we be checking her blood pressure at home, and if so, what numbers would you want us to report back to you?"
-                                                           ]
-                                }
-                  },
-    "knee":  {
-                 "checkIn":  {
-                                 "id":  "33dc5e5c-896e-4f54-a8a2-42ff02ad0093",
-                                 "timestamp":  "2026-05-23T06:32:30.522Z",
-                                 "medContext":  {
-                                                    "name":  "Amlodipine 5mg",
-                                                    "dayOfChange":  5
-                                                },
-                                 "language":  "ja",
-                                 "rawTranscript":  "今朝、庭仕事をしてから膝が少し痛みます。",
-                                 "translatedTranscript":  "My knee has been hurting a little since I did some gardening this morning.",
-                                 "extracted":  {
-                                                   "medicationTaken":  "unsure",
-                                                   "perceivedEffect":  "unsure",
-                                                   "symptoms":  [
-                                                                    {
-                                                                        "term":  "knee pain",
-                                                                        "isNew":  false
-                                                                    }
-                                                                ],
-                                                   "comprehensionFlag":  false
-                                               },
-                                 "ambiguity":  [
-                                                   {
-                                                       "phrase":  "膝が少し痛みます",
-                                                       "couldMean":  [
-                                                                         "dull aching pain in the knee",
-                                                                         "sharp pain in the knee",
-                                                                         "knee stiffness or tightness",
-                                                                         "knee swelling with pain"
-                                                                     ],
-                                                       "followUp":  "Can you describe the knee pain a bit more — is it a dull ache, a sharp pain, or more of a stiffness? And does the knee look swollen?"
-                                                   },
-                                                   {
-                                                       "phrase":  "(medication not mentioned)",
-                                                       "couldMean":  [
-                                                                         "parent took today\u0027s dose of Amlodipine 5mg",
-                                                                         "parent did not take today\u0027s dose of Amlodipine 5mg",
-                                                                         "parent took dose at a different time than usual"
-                                                                     ],
-                                                       "followUp":  "Did you take your Amlodipine 5mg tablet today?"
-                                                   }
-                                               ]
-                             },
-                 "decision":  {
-                                  "level":  "monitor",
-                                  "reasons":  [
-                                                  "All reported symptoms are in baseline.knownSymptoms with no new pattern: knee pain"
-                                              ],
-                                  "triggeredRules":  [
-                                                         "knownSymptomNoNewPattern"
-                                                     ],
-                                  "redFlags":  [
-
-                                               ]
-                              },
-                 "brief":  {
-                               "headline":  "Your mother\u0027s knee discomfort after gardening today looks like her usual pattern, but it\u0027s worth keeping an eye on over the coming days.",
-                               "whatChanged":  "Your mother mentioned that her knee has been hurting a little since she did some gardening this morning. This kind of knee pain has shown up for her before, so it doesn\u0027t appear to be anything new right now — though it\u0027s not entirely clear whether today\u0027s activity made it feel different from her usual aches.",
-                               "whyItMatters":  "Because she\u0027s only been on her blood pressure medication for five days and didn\u0027t mention whether she took her dose today, it\u0027s a good idea to gently check in with her about that and keep a note of how her knee feels over the next day or two — just so you have something concrete to share with her doctor if things shift.",
-                               "suggestedAction":  "At your mother\u0027s next scheduled appointment, let her doctor know about today\u0027s knee discomfort after gardening and ask whether they\u0027d like you to track any changes, and also confirm with the doctor\u0027s office that her Amlodipine routine is on track since she\u0027s still in the early days of that prescription.",
-                               "questionsForDoctor":  [
-                                                          "Her knee bothered her after gardening today — is there anything specific we should watch for that would tell us this is more than her usual knee discomfort?",
-                                                          "She didn\u0027t mention her medication during today\u0027s check-in — is there a good way to make sure she\u0027s remembering her Amlodipine each day, especially this early on?",
-                                                          "Are there any activities, like gardening, that we should be mindful of while she\u0027s adjusting to her blood pressure medication?",
-                                                          "If her knee pain seems worse than usual over the next few days, at what point should we call the office rather than wait for her next routine visit?",
-                                                          "Is it helpful for us to keep a simple log of her knee pain days between now and the next appointment?"
-                                                      ]
-                           }
-             }
+    "dizziness": {
+        "checkIn": {
+            "id": "1551d8c4-e5ff-4f72-85d7-684f7e7f8019",
+            "timestamp": "2026-05-23T06:32:12.406Z",
+            "medContext": {
+                "name": "Amlodipine 5mg",
+                "dayOfChange": 5
+            },
+            "language": "ja",
+            "rawTranscript": "今朝は薬を飲み忘れて、ちょっとふらふらします。",
+            "translatedTranscript": "This morning I forgot to take my medication, and I feel a bit furafu ra (dizzy/lightheaded/unsteady).",
+            "extracted": {
+                "medicationTaken": "no",
+                "perceivedEffect": "worse",
+                "symptoms": [
+                    {
+                        "term": "dizziness/lightheadedness/unsteadiness",
+                        "isNew": true
+                    }
+                ],
+                "comprehensionFlag": false
+            },
+            "ambiguity": [
+                {
+                    "phrase": "ふらふらします",
+                    "couldMean": [
+                        "dizzy (sensation of spinning)",
+                        "lightheaded (feeling faint or woozy)",
+                        "physically unsteady or weak on the feet",
+                        "general malaise or wooziness without a specific directional component"
+                    ],
+                    "followUp": "You mentioned feeling 'furafu ra' — could you describe it a bit more? For example, does the room seem to spin around you, do you feel like you might faint or black out, or do you feel unsteady on your feet as if you might lose your balance?"
+                }
+            ]
+        },
+        "decision": {
+            "level": "escalate",
+            "reasons": [
+                "New symptom(s) within 14 days of starting Amlodipine 5mg (day 5): dizziness/lightheadedness/unsteadiness",
+                "Missed dose alongside new symptom(s): dizziness/lightheadedness/unsteadiness"
+            ],
+            "triggeredRules": [
+                "newSymptomAfterMedChange",
+                "missedDosePlusNewSymptom"
+            ],
+            "redFlags": []
+        },
+        "brief": {
+            "headline": "Your mother felt dizzy and missed her blood pressure medication this morning — her doctor's office needs to hear from you today.",
+            "whatChanged": "Your mother did not take her Amlodipine this morning and is describing a feeling of dizziness or unsteadiness that is new for her — it is not something she typically experiences and is not part of her usual day-to-day aches and pains.",
+            "whyItMatters": "Dizziness or unsteadiness appearing just five days into a new blood pressure medication, especially on a morning when a dose was missed, is something her doctor needs to know about promptly — it could affect how safely she moves around the house and whether her current treatment plan needs any adjustment.",
+            "suggestedAction": "Call her prescribing doctor's office today — before her next scheduled dose — and let them know she missed this morning's Amlodipine on day five of starting it and is feeling dizzy or unsteady, so they can advise you on what to do next.",
+            "questionsForDoctor": [
+                "Should she take today's missed dose now, wait until her next scheduled time, or skip it entirely — and what is the safest approach given how she is feeling right now?",
+                "Could the dizziness or unsteadiness she is describing be connected to starting Amlodipine five days ago, and is this something you would expect to settle on its own?",
+                "Are there specific warning signs — such as a fall, fainting, or the dizziness getting worse — that should prompt us to call back or go to urgent care right away?",
+                "Is there anything she should avoid doing today, like driving or climbing stairs, while she is feeling unsteady?",
+                "Should we be checking her blood pressure at home, and if so, what numbers would you want us to report back to you?"
+            ]
+        }
+    },
+    "knee": {
+        "checkIn": {
+            "id": "33dc5e5c-896e-4f54-a8a2-42ff02ad0093",
+            "timestamp": "2026-05-23T06:32:30.522Z",
+            "medContext": {
+                "name": "Amlodipine 5mg",
+                "dayOfChange": 5
+            },
+            "language": "ja",
+            "rawTranscript": "今朝、庭仕事をしてから膝が少し痛みます。",
+            "translatedTranscript": "My knee has been hurting a little since I did some gardening this morning.",
+            "extracted": {
+                "medicationTaken": "unsure",
+                "perceivedEffect": "unsure",
+                "symptoms": [
+                    {
+                        "term": "knee pain",
+                        "isNew": false
+                    }
+                ],
+                "comprehensionFlag": false
+            },
+            "ambiguity": [
+                {
+                    "phrase": "膝が少し痛みます",
+                    "couldMean": [
+                        "dull aching pain in the knee",
+                        "sharp pain in the knee",
+                        "knee stiffness or tightness",
+                        "knee swelling with pain"
+                    ],
+                    "followUp": "Can you describe the knee pain a bit more — is it a dull ache, a sharp pain, or more of a stiffness? And does the knee look swollen?"
+                },
+                {
+                    "phrase": "(medication not mentioned)",
+                    "couldMean": [
+                        "parent took today's dose of Amlodipine 5mg",
+                        "parent did not take today's dose of Amlodipine 5mg",
+                        "parent took dose at a different time than usual"
+                    ],
+                    "followUp": "Did you take your Amlodipine 5mg tablet today?"
+                }
+            ]
+        },
+        "decision": {
+            "level": "monitor",
+            "reasons": [
+                "All reported symptoms are in baseline.knownSymptoms with no new pattern: knee pain"
+            ],
+            "triggeredRules": [
+                "knownSymptomNoNewPattern"
+            ],
+            "redFlags": []
+        },
+        "brief": {
+            "headline": "Your mother's knee discomfort after gardening today looks like her usual pattern, but it's worth keeping an eye on over the coming days.",
+            "whatChanged": "Your mother mentioned that her knee has been hurting a little since she did some gardening this morning. This kind of knee pain has shown up for her before, so it doesn't appear to be anything new right now — though it's not entirely clear whether today's activity made it feel different from her usual aches.",
+            "whyItMatters": "Because she's only been on her blood pressure medication for five days and didn't mention whether she took her dose today, it's a good idea to gently check in with her about that and keep a note of how her knee feels over the next day or two — just so you have something concrete to share with her doctor if things shift.",
+            "suggestedAction": "At your mother's next scheduled appointment, let her doctor know about today's knee discomfort after gardening and ask whether they'd like you to track any changes, and also confirm with the doctor's office that her Amlodipine routine is on track since she's still in the early days of that prescription.",
+            "questionsForDoctor": [
+                "Her knee bothered her after gardening today — is there anything specific we should watch for that would tell us this is more than her usual knee discomfort?",
+                "She didn't mention her medication during today's check-in — is there a good way to make sure she's remembering her Amlodipine each day, especially this early on?",
+                "Are there any activities, like gardening, that we should be mindful of while she's adjusting to her blood pressure medication?",
+                "If her knee pain seems worse than usual over the next few days, at what point should we call the office rather than wait for her next routine visit?",
+                "Is it helpful for us to keep a simple log of her knee pain days between now and the next appointment?"
+            ]
+        }
+    },
+    "dizzinessFollowup": {
+        "checkIn": {
+            "id": "d3f656c3-a7e6-4dc8-ab26-3084c8e898a0",
+            "timestamp": "2026-05-24T11:47:40.307Z",
+            "medContext": {
+                "name": "Amlodipine 5mg",
+                "dayOfChange": 5
+            },
+            "language": "en",
+            "rawTranscript": "Mom says the dizziness is still bothering her today.",
+            "translatedTranscript": "Mom says the dizziness is still bothering her today.",
+            "extracted": {
+                "medicationTaken": "unsure",
+                "perceivedEffect": "unsure",
+                "symptoms": [
+                    {
+                        "term": "dizziness",
+                        "isNew": true
+                    }
+                ],
+                "comprehensionFlag": false
+            },
+            "ambiguity": [
+                {
+                    "phrase": "dizziness",
+                    "couldMean": [
+                        "a sensation of spinning or vertigo",
+                        "lightheadedness or feeling faint",
+                        "general unsteadiness or loss of balance",
+                        "weakness without a true spinning sensation"
+                    ],
+                    "followUp": "When you feel dizzy, does the room seem to spin around you, or do you feel lightheaded and faint, or do you feel unsteady on your feet?"
+                },
+                {
+                    "phrase": "still bothering her today",
+                    "couldMean": [
+                        "the dizziness has been present continuously since it first started",
+                        "the dizziness returned again today after some relief"
+                    ],
+                    "followUp": "Has the dizziness been there without any break since it first started, or did it go away at some point and then come back?"
+                },
+                {
+                    "phrase": "(medication taken status not mentioned)",
+                    "couldMean": [
+                        "the parent took her Amlodipine dose today as prescribed",
+                        "the parent did not take her Amlodipine dose today"
+                    ],
+                    "followUp": "Did you take your Amlodipine 5mg pill today?"
+                }
+            ]
+        },
+        "decision": {
+            "level": "escalate",
+            "reasons": [
+                "New symptom(s) within 14 days of starting Amlodipine 5mg (day 5): dizziness"
+            ],
+            "triggeredRules": [
+                "newSymptomAfterMedChange"
+            ],
+            "redFlags": []
+        },
+        "brief": {
+            "headline": "Your mom is experiencing dizziness that started around the same time as her new blood pressure medication, and this needs a prompt call to her doctor today.",
+            "whatChanged": "Since starting her new blood pressure pill five days ago, your mom has been dealing with dizziness that is still bothering her today — this is not something she typically experiences, as her usual day-to-day discomforts are knee pain, back stiffness, and hay-fever symptoms.",
+            "whyItMatters": "Dizziness that appears shortly after starting a new blood pressure medication is something her prescribing doctor needs to hear about promptly, because it can affect her safety — particularly her risk of losing her footing and falling. It's also not yet clear exactly what kind of dizziness she's having (a spinning feeling, lightheadedness, or unsteadiness), which is important detail for her doctor to sort out.",
+            "suggestedAction": "Call her prescribing doctor's office today — not at the next routine visit — describe the dizziness, when it started, and how it feels, and ask what steps they recommend right now.",
+            "questionsForDoctor": [
+                "Can dizziness like this be related to the Amlodipine she just started, and is it something that typically passes on its own?",
+                "Should she be checking her blood pressure at home right now, and if so, how often and what numbers should prompt us to call again?",
+                "What specific warning signs — such as fainting, falling, or the dizziness getting worse — should make us go to urgent care or call 911 instead of waiting?",
+                "Can you help us describe the dizziness more precisely — does it matter whether it feels like spinning versus lightheadedness versus just unsteadiness, and how do we tell the difference?",
+                "Is it safe for her to continue her normal daily activities, like walking around the house or going up stairs, while she is feeling this way?"
+            ]
+        }
+    }
 }

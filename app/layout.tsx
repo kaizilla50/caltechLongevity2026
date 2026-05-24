@@ -14,7 +14,7 @@ const lora = Lora({
 });
 
 export const metadata: Metadata = {
-  title: "Throughline — caregiver check-in",
+  title: "CuraPhi — Bringing words. Caring better.",
   description: "Bilingual medication-response check-ins for adult-child caregivers.",
 };
 

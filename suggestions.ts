@@ -13,7 +13,18 @@ export interface Suggestion {
   text: string;
   source: string;
   prefill: string;
+  // When set, the click handler can serve a pre-canned response from
+  // demo-cache.json under this key instead of running the live LLM pipeline.
+  // Only suggestions we've explicitly cached set this; everything else falls
+  // through to the live path. `?live=1` forces live regardless.
+  cacheKey?: string;
 }
+
+// Suggestion source → demo-cache.json key. Adding a row here is the only
+// change required to cache a new variant; nothing else needs to know.
+const SYMPTOM_CACHE_KEYS: Record<string, string> = {
+  dizziness: "dizzinessFollowup",
+};
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const MED_RECENT_WINDOW = 14; // days
@@ -97,6 +108,7 @@ function ruleRecentSymptom(
       source: "recentSymptom",
       text: `She mentioned ${sym} ${when} — is she still feeling it?`,
       prefill: `Mom says the ${sym} is still bothering her today.`,
+      cacheKey: SYMPTOM_CACHE_KEYS[sym],
     };
   }
   return null;

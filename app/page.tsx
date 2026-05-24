@@ -12,8 +12,9 @@ import { decide } from "@/rules";
 import baselineJson from "@/baseline.json";
 import demoCacheJson from "@/demo-cache.json";
 import { useProfile } from "@/profile-context";
-import type { Appointment, CareTeamMember, Medication } from "@/profile";
+import type { Appointment, CareTeamMember, Medication, Profile } from "@/profile";
 import { generateSuggestions, type Suggestion } from "@/suggestions";
+import { findEpisodes, type Episode } from "@/recovery";
 
 
 type ApiResponse = {
@@ -95,6 +96,23 @@ function Icon({ d, className = "" }: { d: string; className?: string }) {
  );
 }
 
+// Small filled heart for the greeting. Sized to sit on the cap-line of
+// surrounding text-sm copy; uses an inline style so it stays on the warm
+// brand palette without depending on Tailwind's default red ramp.
+function HeartIcon() {
+ return (
+   <svg
+     className="w-3 h-3 shrink-0"
+     viewBox="0 0 24 24"
+     fill="currentColor"
+     style={{ color: "#C24F4F" }}
+     aria-hidden="true"
+   >
+     <path d="M11.645 20.91l-.007-.003-.022-.012a15.247 15.247 0 01-.383-.218 25.18 25.18 0 01-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0112 5.052 5.5 5.5 0 0116.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 01-4.244 3.17 15.247 15.247 0 01-.383.219l-.022.012-.007.003-.003.001a.752.752 0 01-.704 0l-.003-.001z" />
+   </svg>
+ );
+}
+
 
 type NavItemId = "checkin" | "history" | "trends" | "medications" | "careteam" | "settings";
 
@@ -136,11 +154,11 @@ function LeftSidebar({
      <div className="px-5 py-6 border-b border-edge">
        <div className="flex items-center gap-2.5">
          <div className="w-7 h-7 rounded-lg bg-clay flex items-center justify-center shrink-0">
-           <span className="text-cream text-xs font-serif font-bold">T</span>
+           <span className="text-cream text-xs font-serif font-bold">C</span>
          </div>
-         <div>
-           <div className="text-ink-deep font-serif text-base leading-none">Throughline</div>
-           <div className="text-[10px] text-ink-quiet mt-0.5">Caregiver companion</div>
+         <div className="min-w-0">
+           <div className="text-ink-deep font-serif text-base leading-none tracking-tight">CuraPhi</div>
+           <div className="text-[10px] text-ink-quiet mt-1 leading-tight">Bringing words. Caring better.</div>
          </div>
        </div>
      </div>
@@ -308,6 +326,25 @@ export default function Dashboard() {
  const transcriptRef = useRef<HTMLTextAreaElement>(null);
 
  function pickSuggestion(s: Suggestion) {
+   // Cached path — same shape as the seeded buttons. Fires when the
+   // suggestion declares a cacheKey, demo-cache.json has that entry, and
+   // we're not in ?live=1. Otherwise we fall through to the live-prefill
+   // path so the caregiver can edit and hit Analyze themselves.
+   const cached =
+     s.cacheKey && !liveMode
+       ? (demoCache as Record<string, ApiResponse>)[s.cacheKey]
+       : undefined;
+   if (cached) {
+     setError(null);
+     setResult(null);
+     setLoading(true);
+     setTimeout(() => {
+       setResult(cached);
+       setLoading(false);
+     }, SEEDED_DELAY_MS);
+     return;
+   }
+
    setTranscript(s.prefill);
    // Defer to the next frame so React has committed the new value before we
    // move the caret to the end and scroll the textarea into view.
@@ -337,8 +374,9 @@ export default function Dashboard() {
            {activeView === "checkin" && (
              <>
                {/* Greeting */}
-               <div className="text-sm text-ink-quiet mb-1">
-                 {greeting}, {profile.caregiverName}
+               <div className="text-sm text-ink-quiet mb-1 inline-flex items-center gap-1">
+                 <span>{greeting}, {profile.caregiverName}</span>
+                 <HeartIcon />
                </div>
 
 
@@ -1151,7 +1189,7 @@ function MedicationsView() {
       <div className="text-sm text-ink-quiet mb-1">Medications</div>
       <div className="flex items-start justify-between gap-4">
         <h1 className="font-serif text-3xl md:text-4xl leading-tight text-ink-deep">
-          Mom&rsquo;s regimen.
+          Medication Summary
         </h1>
         {!adding && (
           <button
@@ -1647,21 +1685,11 @@ function CareTeamCard({
 // short list of patterns derived from the same decide() pipeline that scores
 // individual check-ins. No new rule logic, no LLM, no heavy chart library —
 // just inline-styled <div> bars and a couple of named aggregators.
+type TrendsTab = "overview" | "med-response" | "recovery";
+
 function TrendsView() {
   const { profile } = useProfile();
-
-  const months = useMemo(
-    () => buildMonthlyBuckets(profile.checkInHistory),
-    [profile.checkInHistory],
-  );
-  const patterns = useMemo(
-    () => derivePatterns(profile.checkInHistory),
-    [profile.checkInHistory],
-  );
-  const maxTotal = useMemo(
-    () => Math.max(1, ...months.map((m) => m.total)),
-    [months],
-  );
+  const [tab, setTab] = useState<TrendsTab>("overview");
 
   return (
     <>
@@ -1670,9 +1698,64 @@ function TrendsView() {
         Mom&rsquo;s year at a glance.
       </h1>
       <p className="mt-2 text-ink-soft text-sm md:text-base leading-relaxed max-w-xl">
-        {months.length}{" "}months of check-ins, scored by the same rules engine that ran today&rsquo;s.
+        Scored by the same rules engine that ran today&rsquo;s check-in.
       </p>
 
+      <TrendsTabBar tab={tab} onChange={setTab} />
+
+      {tab === "overview" && <OverviewTab history={profile.checkInHistory} />}
+      {tab === "med-response" && <MedResponseTab profile={profile} />}
+      {tab === "recovery" && <RecoveryTab history={profile.checkInHistory} />}
+    </>
+  );
+}
+
+function TrendsTabBar({
+  tab,
+  onChange,
+}: {
+  tab: TrendsTab;
+  onChange: (t: TrendsTab) => void;
+}) {
+  const items: { id: TrendsTab; label: string }[] = [
+    { id: "overview", label: "Overview" },
+    { id: "med-response", label: "Medication response" },
+    { id: "recovery", label: "Recovery time" },
+  ];
+  return (
+    <div className="mt-7 flex gap-1 border-b border-edge overflow-x-auto">
+      {items.map((item) => {
+        const active = tab === item.id;
+        return (
+          <button
+            key={item.id}
+            type="button"
+            onClick={() => onChange(item.id)}
+            aria-current={active ? "page" : undefined}
+            className={`shrink-0 px-4 py-2 text-sm transition-colors -mb-px ${
+              active
+                ? "border-b-2 border-clay text-clay-deep font-medium"
+                : "border-b-2 border-transparent text-ink-soft hover:text-ink-deep"
+            }`}
+          >
+            {item.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function OverviewTab({ history }: { history: CheckIn[] }) {
+  const months = useMemo(() => buildMonthlyBuckets(history), [history]);
+  const patterns = useMemo(() => derivePatterns(history), [history]);
+  const maxTotal = useMemo(
+    () => Math.max(1, ...months.map((m) => m.total)),
+    [months],
+  );
+
+  return (
+    <>
       <div className="mt-8">
         <Section label="Each month">
           <MonthlyBarStrip months={months} maxTotal={maxTotal} />
@@ -1692,6 +1775,363 @@ function TrendsView() {
         </Section>
       </div>
     </>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Medication response tab — pick a med, show ±30 days around its startedOn as
+// a horizontal strip of verdict-colored squares. Pre/post tallies make the
+// onset-cluster pattern numerically obvious; the bar makes it visually so.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const MED_RESPONSE_WINDOW = 30; // days each side of startedOn
+
+function MedResponseTab({ profile }: { profile: Profile }) {
+  // Default to the most recently started med — for SEED_MOM that's Amlodipine,
+  // which gives the cleanest demo (dizziness right after the start date).
+  const medsByRecency = useMemo(
+    () =>
+      [...profile.medications].sort((a, b) =>
+        b.startedOn.localeCompare(a.startedOn),
+      ),
+    [profile.medications],
+  );
+  const [selectedMedId, setSelectedMedId] = useState<string>(
+    medsByRecency[0]?.id ?? "",
+  );
+  const med =
+    profile.medications.find((m) => m.id === selectedMedId) ??
+    medsByRecency[0];
+
+  const data = useMemo(
+    () =>
+      med
+        ? buildMedResponseTimeline(med, profile.checkInHistory)
+        : null,
+    [med, profile.checkInHistory],
+  );
+
+  if (!med || !data) {
+    return (
+      <div className="mt-8 text-ink-quiet text-sm">No medications to plot.</div>
+    );
+  }
+
+  return (
+    <div className="mt-8 space-y-6">
+      {/* Med selector */}
+      <div className="flex flex-wrap gap-2">
+        {medsByRecency.map((m) => {
+          const active = m.id === selectedMedId;
+          return (
+            <button
+              key={m.id}
+              type="button"
+              onClick={() => setSelectedMedId(m.id)}
+              className={`px-3 py-1.5 rounded-full text-sm transition-colors ${
+                active
+                  ? "bg-clay text-cream font-medium"
+                  : "border border-edge text-ink-soft hover:border-clay/40 hover:text-ink-deep"
+              }`}
+            >
+              {m.name}
+            </button>
+          );
+        })}
+      </div>
+
+      <p className="text-ink-soft text-sm md:text-base leading-relaxed">
+        Symptoms flagged within {MED_RESPONSE_WINDOW} days of starting{" "}
+        <span className="font-medium text-ink-deep">
+          {med.name} {med.dose}
+        </span>
+        .
+      </p>
+
+      {/* Pre/post comparison — escalate count is the salient signal, with
+          total flagged (escalate + monitor) below for context. Highlight the
+          post box when escalates went UP after starting the med. */}
+      <div className="grid grid-cols-2 gap-3">
+        <ResponseStat
+          label={`${MED_RESPONSE_WINDOW} days before`}
+          escalates={data.preEscalates}
+          flagged={data.preFlagged}
+          covered={data.preCovered}
+        />
+        <ResponseStat
+          label={`${MED_RESPONSE_WINDOW} days after`}
+          escalates={data.postEscalates}
+          flagged={data.postFlagged}
+          covered={data.postCovered}
+          highlight={data.postEscalates > data.preEscalates}
+        />
+      </div>
+
+      {/* Timeline strip */}
+      <div className="rounded-2xl border border-edge bg-paper p-5 md:p-6">
+        <div className="h-10 flex items-stretch gap-px">
+          {data.days.map((d) => (
+            <div
+              key={d.dayKey}
+              title={`${d.dayKey} · ${d.level ?? "no check-in"}${d.symptomLabel ? ` · ${d.symptomLabel}` : ""}`}
+              className={`flex-1 min-w-0 ${dayClass(d.level)} ${d.isStart ? "outline outline-2 outline-clay -outline-offset-1 z-10 relative" : ""}`}
+            />
+          ))}
+        </div>
+
+        {/* Caret under the start day */}
+        <div className="mt-1 flex gap-px text-[10px] text-clay-deep">
+          {data.days.map((d) => (
+            <div key={d.dayKey} className="flex-1 min-w-0 text-center leading-none">
+              {d.isStart ? "▲" : ""}
+            </div>
+          ))}
+        </div>
+
+        {/* Axis labels: left edge, start, right edge */}
+        <div className="mt-1 flex justify-between text-[10px] text-ink-quiet">
+          <span>{shortMd(data.days[0].dayKey)}</span>
+          <span className="text-clay-deep font-medium">
+            Start: {prettyDate(med.startedOn)}
+          </span>
+          <span>{shortMd(data.days[data.days.length - 1].dayKey)}</span>
+        </div>
+
+        {/* Legend */}
+        <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-ink-soft">
+          <LegendSwatch className="bg-clay" label="Escalate" />
+          <LegendSwatch className="bg-stone-warm/75" label="Monitor" />
+          <LegendSwatch className="bg-stone-warm/25" label="Fine" />
+          <LegendSwatch className="bg-edge/30" label="No check-in" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ResponseStat({
+  label,
+  escalates,
+  flagged,
+  covered,
+  highlight,
+}: {
+  label: string;
+  escalates: number;
+  flagged: number;
+  covered: number;
+  highlight?: boolean;
+}) {
+  const monitors = flagged - escalates;
+  return (
+    <div
+      className={`rounded-xl border p-4 ${highlight ? "border-clay/40 bg-clay-soft/40" : "border-edge bg-paper"}`}
+    >
+      <div className="text-[10px] uppercase tracking-widest text-ink-quiet mb-1">
+        {label}
+      </div>
+      <div className={`font-serif text-2xl ${highlight ? "text-clay-deep" : "text-ink-deep"}`}>
+        {escalates}
+        <span className="text-ink-quiet text-base ml-1">escalate{escalates === 1 ? "" : "s"}</span>
+      </div>
+      <div className="text-xs text-ink-quiet mt-1">
+        {monitors} monitor day{monitors === 1 ? "" : "s"} · {covered} of {MED_RESPONSE_WINDOW} days had check-ins
+      </div>
+    </div>
+  );
+}
+
+interface MedTimelineDay {
+  dayKey: string;
+  isStart: boolean;
+  level: "escalate" | "monitor" | "fine" | null;
+  symptomLabel: string;
+}
+
+interface MedTimeline {
+  days: MedTimelineDay[];
+  preFlagged: number;
+  postFlagged: number;
+  preEscalates: number;
+  postEscalates: number;
+  preCovered: number;
+  postCovered: number;
+}
+
+function buildMedResponseTimeline(
+  med: Medication,
+  history: CheckIn[],
+): MedTimeline {
+  const byDay = new Map<string, CheckIn>();
+  for (const ci of history) byDay.set(ci.timestamp.slice(0, 10), ci);
+
+  const startMs = Date.UTC(
+    +med.startedOn.slice(0, 4),
+    +med.startedOn.slice(5, 7) - 1,
+    +med.startedOn.slice(8, 10),
+  );
+  const dayMs = 24 * 60 * 60 * 1000;
+
+  const days: MedTimelineDay[] = [];
+  let preFlagged = 0;
+  let preEscalates = 0;
+  let preCovered = 0;
+  let postFlagged = 0;
+  let postEscalates = 0;
+  let postCovered = 0;
+
+  for (let offset = -MED_RESPONSE_WINDOW; offset <= MED_RESPONSE_WINDOW; offset++) {
+    const t = startMs + offset * dayMs;
+    const d = new Date(t);
+    const dayKey = `${d.getUTCFullYear()}-${pad2(d.getUTCMonth() + 1)}-${pad2(d.getUTCDate())}`;
+    const ci = byDay.get(dayKey);
+    const level = ci ? decide(ci, baseline).level : null;
+    const symptomLabel = ci
+      ? ci.extracted.symptoms.map((s) => s.term).join(", ")
+      : "";
+    days.push({ dayKey, isStart: offset === 0, level, symptomLabel });
+
+    if (offset === 0) continue;
+    const isFlagged = level === "escalate" || level === "monitor";
+    const isEscalate = level === "escalate";
+    const covered = ci != null;
+    if (offset < 0) {
+      if (covered) preCovered++;
+      if (isFlagged) preFlagged++;
+      if (isEscalate) preEscalates++;
+    } else {
+      if (covered) postCovered++;
+      if (isFlagged) postFlagged++;
+      if (isEscalate) postEscalates++;
+    }
+  }
+
+  return {
+    days,
+    preFlagged,
+    postFlagged,
+    preEscalates,
+    postEscalates,
+    preCovered,
+    postCovered,
+  };
+}
+
+function dayClass(level: "escalate" | "monitor" | "fine" | null): string {
+  switch (level) {
+    case "escalate":
+      return "bg-clay";
+    case "monitor":
+      return "bg-stone-warm/75";
+    case "fine":
+      return "bg-stone-warm/25";
+    default:
+      return "bg-edge/30";
+  }
+}
+
+function pad2(n: number): string {
+  return n < 10 ? `0${n}` : `${n}`;
+}
+
+function shortMd(iso: string): string {
+  const m = +iso.slice(5, 7);
+  const d = +iso.slice(8, 10);
+  return `${SHORT_MONTH_NAMES[m - 1]} ${d}`;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Recovery tab — one row per escalate cluster from recovery.ts. The cluster
+// algorithm + recovery-day math live in that module and are unit-tested; this
+// component is presentational only.
+// ─────────────────────────────────────────────────────────────────────────────
+
+function RecoveryTab({ history }: { history: CheckIn[] }) {
+  const episodes = useMemo(
+    () => findEpisodes(history, baseline),
+    [history],
+  );
+
+  const resolved = episodes.filter((e) => e.recoveryDays !== null);
+  const avgRecovery =
+    resolved.length > 0
+      ? Math.round(
+          resolved.reduce((s, e) => s + (e.recoveryDays ?? 0), 0) /
+            resolved.length,
+        )
+      : null;
+  const ongoingCount = episodes.length - resolved.length;
+
+  return (
+    <div className="mt-8 space-y-5">
+      <p className="text-ink-soft text-sm md:text-base leading-relaxed">
+        {avgRecovery !== null ? (
+          <>
+            Average recovery:{" "}
+            <span className="font-medium text-ink-deep">
+              {avgRecovery} day{avgRecovery === 1 ? "" : "s"}
+            </span>{" "}
+            across {resolved.length} resolved episode
+            {resolved.length === 1 ? "" : "s"}
+            {ongoingCount > 0 ? `, ${ongoingCount} ongoing.` : "."}
+          </>
+        ) : (
+          <>No fully recovered episodes yet.</>
+        )}
+      </p>
+
+      {episodes.length === 0 ? (
+        <div className="rounded-2xl border border-edge bg-paper p-6 text-sm text-ink-quiet">
+          No escalate episodes in this history.
+        </div>
+      ) : (
+        <div className="rounded-2xl border border-edge bg-paper overflow-hidden">
+          {episodes.map((ep) => (
+            <RecoveryRow key={ep.id} episode={ep} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function RecoveryRow({ episode }: { episode: Episode }) {
+  return (
+    <div className="flex items-start gap-4 px-5 py-4 border-b border-edge/60 last:border-b-0">
+      <div className="pt-1.5">
+        <Dot level="escalate" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="text-ink-deep font-medium leading-tight">
+          {episode.cause}
+        </div>
+        {episode.symptoms.length > 0 && (
+          <div className="text-xs text-ink-quiet mt-0.5">
+            {episode.symptoms.join(", ")}
+          </div>
+        )}
+        <div className="text-xs text-ink-quiet mt-1 tabular-nums">
+          Started {prettyDate(episode.startIso)} ·{" "}
+          {episode.flaggedDays} flagged day{episode.flaggedDays === 1 ? "" : "s"}
+        </div>
+      </div>
+      <div className="shrink-0 text-right w-28">
+        {episode.ongoing ? (
+          <span className="inline-block text-[10px] uppercase tracking-widest font-medium text-clay-deep bg-clay-soft border border-clay/30 px-2.5 py-1 rounded-full">
+            Ongoing
+          </span>
+        ) : (
+          <>
+            <div className="font-serif text-2xl text-ink-deep tabular-nums leading-none">
+              {episode.recoveryDays}
+            </div>
+            <div className="text-[10px] uppercase tracking-widest text-ink-quiet mt-1">
+              days to recovery
+            </div>
+          </>
+        )}
+      </div>
+    </div>
   );
 }
 
