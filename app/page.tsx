@@ -1103,55 +1103,98 @@ function MedicationsView() {
 }
 
 function MedicationCard({ med }: { med: Medication }) {
+  const [expanded, setExpanded] = useState(false);
+  const panelId = `med-panel-${med.id}`;
+
   return (
-    <article className="rounded-2xl border border-edge bg-paper p-6 md:p-7 space-y-5">
-      <div className="flex items-start justify-between gap-4">
-        <h2 className="font-serif text-xl md:text-2xl leading-snug text-ink-deep">
-          {med.name}{" "}
-          <span className="text-ink-soft font-normal">{med.dose}</span>
-        </h2>
-        {med.withFood && (
-          <span className="shrink-0 text-[10px] uppercase tracking-widest text-sage bg-sage-soft border border-sage/30 px-2.5 py-1 rounded-full font-medium">
-            With food
-          </span>
-        )}
-      </div>
-
-      <div>
-        <div className="text-xs uppercase tracking-widest text-ink-quiet mb-1.5">
-          Schedule
-        </div>
-        <p className="text-ink-soft leading-relaxed text-sm">{med.schedule}</p>
-      </div>
-
-      <div>
-        <div className="text-xs uppercase tracking-widest text-ink-quiet mb-1.5">
-          Directions
-        </div>
-        <p className="text-ink-soft leading-relaxed text-sm">{med.directions}</p>
-      </div>
-
-      {med.commonSideEffects.length > 0 && (
-        <div>
-          <div className="text-xs uppercase tracking-widest text-ink-quiet mb-2">
-            Common side effects
+    <article className="rounded-2xl border border-edge bg-paper overflow-hidden">
+      {/* Always-visible header: name + dose + one-line purpose. The whole row
+          is a button so keyboard and screen-reader users can toggle too. */}
+      <button
+        type="button"
+        onClick={() => setExpanded((e) => !e)}
+        aria-expanded={expanded}
+        aria-controls={panelId}
+        className="w-full text-left p-6 md:p-7 hover:bg-cream/40 transition-colors"
+      >
+        <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0">
+            <h2 className="font-serif text-xl md:text-2xl leading-snug text-ink-deep">
+              {med.name}{" "}
+              <span className="text-ink-soft font-normal">{med.dose}</span>
+            </h2>
+            <p className="mt-1 text-sm text-ink-soft leading-relaxed">
+              {med.purpose}
+            </p>
           </div>
-          <ul className="flex flex-wrap gap-1.5">
-            {med.commonSideEffects.map((s, i) => (
-              <li
-                key={i}
-                className="text-xs text-ink-soft bg-edge/40 px-2.5 py-1 rounded-full"
-              >
-                {s}
-              </li>
-            ))}
-          </ul>
+          <Icon
+            d="M19.5 8.25l-7.5 7.5-7.5-7.5"
+            className={`mt-2 text-ink-quiet shrink-0 transition-transform duration-300 ${expanded ? "rotate-180" : ""}`}
+          />
         </div>
-      )}
+      </button>
 
-      <div className="pt-4 border-t border-edge text-xs text-ink-quiet">
-        Started {prettyDate(med.startedOn)}{" "}
-        <span className="text-ink-quiet/70">· {relativeAge(med.startedOn)}</span>
+      {/* Collapsible panel — animates via grid-template-rows 0fr ↔ 1fr so we
+          get a smooth height transition without measuring the DOM. The inner
+          overflow-hidden is what makes the clipping work at 0fr. */}
+      <div
+        id={panelId}
+        aria-hidden={!expanded}
+        className={`grid transition-[grid-template-rows] duration-300 ease-out ${expanded ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}
+      >
+        <div className="overflow-hidden">
+          <div className="px-6 md:px-7 pb-6 md:pb-7 pt-5 border-t border-edge space-y-5">
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0">
+                <div className="text-xs uppercase tracking-widest text-ink-quiet mb-1.5">
+                  Schedule
+                </div>
+                <p className="text-ink-soft leading-relaxed text-sm">
+                  {med.schedule}
+                </p>
+              </div>
+              {med.withFood && (
+                <span className="shrink-0 text-[10px] uppercase tracking-widest text-sage bg-sage-soft border border-sage/30 px-2.5 py-1 rounded-full font-medium">
+                  With food
+                </span>
+              )}
+            </div>
+
+            <div>
+              <div className="text-xs uppercase tracking-widest text-ink-quiet mb-1.5">
+                Directions
+              </div>
+              <p className="text-ink-soft leading-relaxed text-sm">
+                {med.directions}
+              </p>
+            </div>
+
+            {med.commonSideEffects.length > 0 && (
+              <div>
+                <div className="text-xs uppercase tracking-widest text-ink-quiet mb-2">
+                  Common side effects
+                </div>
+                <ul className="flex flex-wrap gap-1.5">
+                  {med.commonSideEffects.map((s, i) => (
+                    <li
+                      key={i}
+                      className="text-xs text-ink-soft bg-edge/40 px-2.5 py-1 rounded-full"
+                    >
+                      {s}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            <div className="pt-4 border-t border-edge text-xs text-ink-quiet">
+              Started {prettyDate(med.startedOn)}{" "}
+              <span className="text-ink-quiet/70">
+                · {relativeAge(med.startedOn)}
+              </span>
+            </div>
+          </div>
+        </div>
       </div>
     </article>
   );

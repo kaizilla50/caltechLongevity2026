@@ -8,6 +8,7 @@ export interface Medication {
   id: string;
   name: string;
   dose: string;
+  purpose: string;
   schedule: string;
   withFood: boolean;
   directions: string;
@@ -54,6 +55,7 @@ const MEDICATIONS: Medication[] = [
     id: "med-amlodipine-5",
     name: "Amlodipine",
     dose: "5 mg",
+    purpose: "Lowers blood pressure",
     schedule: "Once daily, morning",
     withFood: false,
     directions: "Take one tablet by mouth each morning at the same time.",
@@ -70,6 +72,7 @@ const MEDICATIONS: Medication[] = [
     id: "med-lisinopril-10",
     name: "Lisinopril",
     dose: "10 mg",
+    purpose: "Lowers blood pressure (ACE inhibitor)",
     schedule: "Once daily, morning",
     withFood: false,
     directions:
@@ -86,6 +89,7 @@ const MEDICATIONS: Medication[] = [
     id: "med-metformin-500",
     name: "Metformin",
     dose: "500 mg",
+    purpose: "Manages blood sugar / type 2 diabetes",
     schedule: "Twice daily with meals",
     withFood: true,
     directions: "Take with breakfast and with dinner. Do not crush the tablet.",
@@ -101,6 +105,7 @@ const MEDICATIONS: Medication[] = [
     id: "med-atorvastatin-20",
     name: "Atorvastatin",
     dose: "20 mg",
+    purpose: "Lowers cholesterol",
     schedule: "Once daily, evening",
     withFood: false,
     directions: "Take one tablet in the evening. Avoid grapefruit juice.",
@@ -111,6 +116,7 @@ const MEDICATIONS: Medication[] = [
     id: "med-vitamin-d3-1000",
     name: "Vitamin D3",
     dose: "1000 IU",
+    purpose: "Bone and general health",
     schedule: "Once daily",
     withFood: true,
     directions: "Take with the largest meal of the day for absorption.",
