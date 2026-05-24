@@ -1070,11 +1070,74 @@ function prettyDate(iso: string): string {
 }
 
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Shared form bits — used by AddMedicationForm and AddCareTeamForm. Inputs
+// match the same warm card styling as the rest of the app; submit stays
+// disabled until the name is non-empty (the only required field per spec).
+// ─────────────────────────────────────────────────────────────────────────────
+
+const todayIso = new Date().toISOString().slice(0, 10);
+
+const inputClass =
+  "w-full rounded-xl border border-edge bg-paper px-3 py-2 text-sm text-ink-deep placeholder:text-ink-quiet focus:outline-none focus:border-clay/60 focus:ring-2 focus:ring-clay/15 transition-colors";
+
+function FormField({
+  label,
+  required,
+  children,
+}: {
+  label: string;
+  required?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <div>
+      <div className="text-xs uppercase tracking-widest text-ink-quiet mb-1.5">
+        {label}
+        {required && <span className="ml-1 text-clay/70">*</span>}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function FormActions({
+  onCancel,
+  submitLabel,
+  canSubmit,
+}: {
+  onCancel: () => void;
+  submitLabel: string;
+  canSubmit: boolean;
+}) {
+  return (
+    <div className="flex justify-end gap-2 pt-4 border-t border-edge">
+      <button
+        type="button"
+        onClick={onCancel}
+        className="rounded-full border border-edge bg-paper px-4 py-2 text-sm text-ink-deep hover:border-clay/40 hover:bg-clay-soft/30 transition-colors"
+      >
+        Cancel
+      </button>
+      <button
+        type="submit"
+        disabled={!canSubmit}
+        className="rounded-full bg-clay px-6 py-2 text-sm font-medium text-cream hover:bg-clay-deep disabled:bg-ink-quiet/40 disabled:cursor-not-allowed transition-colors"
+      >
+        {submitLabel}
+      </button>
+    </div>
+  );
+}
+
+
 // Medications view — read-only cards for the regimen, sorted newest-started
 // first so the recent additions (Amlodipine + Lisinopril) lead. Reads
 // medications straight from useProfile(); no mutations yet.
 function MedicationsView() {
-  const { profile } = useProfile();
+  const { profile, addMedication } = useProfile();
+  const [adding, setAdding] = useState(false);
+
   const meds = useMemo(
     () =>
       [...profile.medications].sort((a, b) =>
@@ -1086,19 +1149,181 @@ function MedicationsView() {
   return (
     <>
       <div className="text-sm text-ink-quiet mb-1">Medications</div>
-      <h1 className="font-serif text-3xl md:text-4xl leading-tight text-ink-deep">
-        Mom&rsquo;s regimen.
-      </h1>
+      <div className="flex items-start justify-between gap-4">
+        <h1 className="font-serif text-3xl md:text-4xl leading-tight text-ink-deep">
+          Mom&rsquo;s regimen.
+        </h1>
+        {!adding && (
+          <button
+            type="button"
+            onClick={() => setAdding(true)}
+            className="shrink-0 rounded-full bg-clay px-4 py-2 text-sm font-medium text-cream hover:bg-clay-deep transition-colors"
+          >
+            + Add medication
+          </button>
+        )}
+      </div>
       <p className="mt-2 text-ink-soft text-sm md:text-base leading-relaxed max-w-xl">
         {meds.length} active medications, newest started first.
       </p>
 
       <div className="mt-8 space-y-5">
+        {adding && (
+          <AddMedicationForm
+            onSubmit={(med) => {
+              addMedication(med);
+              setAdding(false);
+            }}
+            onCancel={() => setAdding(false)}
+          />
+        )}
         {meds.map((med) => (
           <MedicationCard key={med.id} med={med} />
         ))}
       </div>
     </>
+  );
+}
+
+function AddMedicationForm({
+  onSubmit,
+  onCancel,
+}: {
+  onSubmit: (med: Medication) => void;
+  onCancel: () => void;
+}) {
+  const [name, setName] = useState("");
+  const [dose, setDose] = useState("");
+  const [purpose, setPurpose] = useState("");
+  const [schedule, setSchedule] = useState("");
+  const [directions, setDirections] = useState("");
+  const [withFood, setWithFood] = useState(false);
+  const [sideEffectsRaw, setSideEffectsRaw] = useState("");
+  const [startedOn, setStartedOn] = useState(todayIso);
+
+  const nameRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    nameRef.current?.focus();
+  }, []);
+
+  const canSubmit = name.trim().length > 0;
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!canSubmit) return;
+    onSubmit({
+      id: `med-custom-${Date.now()}`,
+      name: name.trim(),
+      dose: dose.trim(),
+      purpose: purpose.trim(),
+      schedule: schedule.trim(),
+      directions: directions.trim(),
+      withFood,
+      commonSideEffects: sideEffectsRaw
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean),
+      startedOn,
+    });
+  }
+
+  return (
+    <form
+      onSubmit={handleSubmit}
+      className="rounded-2xl border border-clay/30 bg-paper p-6 md:p-7 space-y-4"
+    >
+      <div className="text-xs uppercase tracking-[0.22em] text-clay font-medium">
+        New medication
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <FormField label="Name" required>
+          <input
+            ref={nameRef}
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="e.g. Amlodipine"
+            className={inputClass}
+          />
+        </FormField>
+        <FormField label="Dose">
+          <input
+            type="text"
+            value={dose}
+            onChange={(e) => setDose(e.target.value)}
+            placeholder="e.g. 5 mg"
+            className={inputClass}
+          />
+        </FormField>
+      </div>
+
+      <FormField label="Purpose">
+        <input
+          type="text"
+          value={purpose}
+          onChange={(e) => setPurpose(e.target.value)}
+          placeholder="e.g. Lowers blood pressure"
+          className={inputClass}
+        />
+      </FormField>
+
+      <FormField label="Schedule">
+        <input
+          type="text"
+          value={schedule}
+          onChange={(e) => setSchedule(e.target.value)}
+          placeholder="e.g. Once daily, morning"
+          className={inputClass}
+        />
+      </FormField>
+
+      <FormField label="Directions">
+        <textarea
+          value={directions}
+          onChange={(e) => setDirections(e.target.value)}
+          placeholder="e.g. Take one tablet by mouth each morning."
+          rows={2}
+          className={`${inputClass} resize-none`}
+        />
+      </FormField>
+
+      <FormField label="Common side effects">
+        <input
+          type="text"
+          value={sideEffectsRaw}
+          onChange={(e) => setSideEffectsRaw(e.target.value)}
+          placeholder="comma-separated, e.g. dizziness, headache"
+          className={inputClass}
+        />
+      </FormField>
+
+      <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-4 items-end">
+        <FormField label="Started on">
+          <input
+            type="date"
+            value={startedOn}
+            onChange={(e) => setStartedOn(e.target.value)}
+            className={inputClass}
+          />
+        </FormField>
+        <label className="flex items-center gap-2 text-sm text-ink-deep cursor-pointer py-2">
+          <input
+            type="checkbox"
+            checked={withFood}
+            onChange={(e) => setWithFood(e.target.checked)}
+            className="w-4 h-4 rounded border-edge accent-clay"
+          />
+          Take with food
+        </label>
+      </div>
+
+      <FormActions
+        onCancel={onCancel}
+        submitLabel="Add medication"
+        canSubmit={canSubmit}
+      />
+    </form>
   );
 }
 
@@ -1221,7 +1446,8 @@ function relativeAge(startedOn: string): string {
 // that doctor (matched by name). Today (demo) is 2026-05-24, so Dr. Yamamoto's
 // 2026-05-26 cardiology follow-up surfaces here next to the recent dizziness.
 function CareTeamView() {
-  const { profile } = useProfile();
+  const { profile, addCareTeamMember } = useProfile();
+  const [adding, setAdding] = useState(false);
 
   // Soonest upcoming appointment per doctor name. We match on doctorName
   // since CareTeamMember and Appointment don't share an id; the seed keeps
@@ -1241,14 +1467,34 @@ function CareTeamView() {
   return (
     <>
       <div className="text-sm text-ink-quiet mb-1">Care Team</div>
-      <h1 className="font-serif text-3xl md:text-4xl leading-tight text-ink-deep">
-        Mom&rsquo;s circle of care.
-      </h1>
+      <div className="flex items-start justify-between gap-4">
+        <h1 className="font-serif text-3xl md:text-4xl leading-tight text-ink-deep">
+          Mom&rsquo;s circle of care.
+        </h1>
+        {!adding && (
+          <button
+            type="button"
+            onClick={() => setAdding(true)}
+            className="shrink-0 rounded-full bg-clay px-4 py-2 text-sm font-medium text-cream hover:bg-clay-deep transition-colors"
+          >
+            + Add care team member
+          </button>
+        )}
+      </div>
       <p className="mt-2 text-ink-soft text-sm md:text-base leading-relaxed max-w-xl">
         {profile.careTeam.length} clinicians on call.
       </p>
 
       <div className="mt-8 space-y-5">
+        {adding && (
+          <AddCareTeamForm
+            onSubmit={(m) => {
+              addCareTeamMember(m);
+              setAdding(false);
+            }}
+            onCancel={() => setAdding(false)}
+          />
+        )}
         {profile.careTeam.map((member) => (
           <CareTeamCard
             key={member.id}
@@ -1258,6 +1504,94 @@ function CareTeamView() {
         ))}
       </div>
     </>
+  );
+}
+
+function AddCareTeamForm({
+  onSubmit,
+  onCancel,
+}: {
+  onSubmit: (m: CareTeamMember) => void;
+  onCancel: () => void;
+}) {
+  const [name, setName] = useState("");
+  const [role, setRole] = useState("");
+  const [phone, setPhone] = useState("");
+  const [lastVisit, setLastVisit] = useState(todayIso);
+
+  const nameRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    nameRef.current?.focus();
+  }, []);
+
+  const canSubmit = name.trim().length > 0;
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!canSubmit) return;
+    onSubmit({
+      id: `care-custom-${Date.now()}`,
+      name: name.trim(),
+      role: role.trim(),
+      phone: phone.trim(),
+      lastVisit,
+    });
+  }
+
+  return (
+    <form
+      onSubmit={handleSubmit}
+      className="rounded-2xl border border-clay/30 bg-paper p-6 md:p-7 space-y-4"
+    >
+      <div className="text-xs uppercase tracking-[0.22em] text-clay font-medium">
+        New care team member
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <FormField label="Name" required>
+          <input
+            ref={nameRef}
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="e.g. Dr. Aiko Tanaka"
+            className={inputClass}
+          />
+        </FormField>
+        <FormField label="Role">
+          <input
+            type="text"
+            value={role}
+            onChange={(e) => setRole(e.target.value)}
+            placeholder="e.g. Cardiologist"
+            className={inputClass}
+          />
+        </FormField>
+        <FormField label="Phone">
+          <input
+            type="tel"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            placeholder="e.g. +1-555-555-5555"
+            className={inputClass}
+          />
+        </FormField>
+        <FormField label="Last visit">
+          <input
+            type="date"
+            value={lastVisit}
+            onChange={(e) => setLastVisit(e.target.value)}
+            className={inputClass}
+          />
+        </FormField>
+      </div>
+
+      <FormActions
+        onCancel={onCancel}
+        submitLabel="Add care team member"
+        canSubmit={canSubmit}
+      />
+    </form>
   );
 }
 
